@@ -78,7 +78,7 @@ export async function treasurer(p: ResolvedProperty): Promise<Section<TaxRecord>
       url: TREASURER_URL,
       goal: goal(p.pin),
       schema: SCHEMA,
-      ttlSeconds: 24 * 3600,
+      ttlSeconds: 7 * 86_400, // a week: the report shows when it was read
       complete: (d) => d.search_completed === true,
     });
     if (res.state === "running") return section<TaxRecord>(base, "pending", null, `Searching since ${res.startedAt}`);

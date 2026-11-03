@@ -80,7 +80,7 @@ Source keys: `assessor`, `districts`, `flood`, `schools`, `treasurer`, `permits`
 Fetch and Search are free. Agent is billed per step (about $0.15 to $0.45 for a portal search), and
 Monitor costs $0.005 per check.
 
-- Agent results are cached per parcel for 24 hours (Vercel Runtime Cache), so repeat lookups are free. The portal found by Search is remembered per city for 30 days.
+- Agent results are cached per parcel for 7 days in Vercel Runtime Cache, so repeat lookups are free. Each section shows when it was read. The portal found by Search is remembered per city for 30 days.
 - `AGENT_DAILY_LIMIT` (default 25) caps live Agent runs per day across the site. Over the cap, sections say "Couldn't check: today's limit…".
 - `MONITOR_LIMIT` (default 40) caps how many addresses the site watches.
 - Requests for the same parcel at the same moment share one Agent run.

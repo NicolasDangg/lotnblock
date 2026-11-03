@@ -74,8 +74,9 @@ const splitAddress = (address: string) => {
 const mbpGoal = (address: string, jurisdiction: string) => {
   const { number, street } = splitAddress(address);
   return (
-    `This is MyBuildingPermit's permit search. Choose ${jurisdiction} in the Jurisdiction dropdown and pick the Location search option. ` +
+    `This is MyBuildingPermit's permit search. Choose ${jurisdiction} in the Jurisdiction dropdown. Leave the search-type radio buttons as they are. ` +
     `Type "${number}" into the Number field and "${street}" into the Street Name field, leave every other field empty, and press Search. ` +
+    `Wait until the results finish loading (up to 20 seconds) before reading them. ` +
     `Results appear below the form as a table with the columns Permit #, Type, Status, Applied Date, Description and Address. ` +
     `The page always contains the text "No results were found matching the above criteria" in a hidden element: ignore it unless the results table is empty. ` +
     `If the table is empty, try once more with the street name alone without its direction or suffix (for example "19TH" for "NE 19TH ST"). ` +
@@ -173,12 +174,14 @@ async function records(p: ResolvedProperty, portal: Portal) {
     url: portal.url,
     goal: portal.goal,
     schema: SCHEMA,
-    ttlSeconds: 24 * 3600,
+    ttlSeconds: 7 * 86_400, // a week: the report shows when it was read
     complete: (d) => d.search_completed === true && !contradicts(d),
   });
   if (res.state === "running") return { running: true as const, startedAt: res.startedAt };
   const rows: PortalRecord[] = (res.data.records ?? [])
     .filter((r) => r.record_number && !NOT_A_CASE.test(r.record_type ?? ""))
+    // A row that is the table's own header, or carries nothing but a number, isn't a record.
+    .filter((r) => !/^(permit ?#|record ?#|type|record type)$/i.test(r.record_type?.trim() ?? "") && (r.date || r.status || r.description))
     .map((r) => ({
       number: clean(r.record_number),
       type: clean(r.record_type),
@@ -229,7 +232,7 @@ function make(kind: "permits" | "violations") {
           p.address,
           p.jurisdiction === "Unincorporated King County" ? "King County" : p.jurisdiction,
         ),
-        key: `city-permits:v3:${p.pin}`,
+        key: `city-permits:v4:${p.pin}`,
       };
     }
     const receipt = base(portal.url === PORTAL_SEARCH_URL ? PORTAL_SEARCH_URL : portal.url, portal.name);
