@@ -8,7 +8,7 @@ import { SOURCES } from "./sources";
 import type { ResolvedProperty, Section } from "./types";
 
 export type DossierEvent =
-  | { type: "property"; property: ResolvedProperty; sources: { key: string; name: string; connected: boolean }[] }
+  | { type: "property"; property: ResolvedProperty; sources: { key: string; name: string; topic: string; connected: boolean }[] }
   | { type: "outline"; outline: Outline | null }
   | { type: "section"; key: string; section: Section<unknown> }
   | { type: "error"; message: string }
@@ -26,7 +26,7 @@ export async function buildDossier(input: string, emit: (e: DossierEvent) => voi
   emit({
     type: "property",
     property,
-    sources: SOURCES.map((s) => ({ key: s.key, name: s.name, connected: Boolean(s.run) })),
+    sources: SOURCES.map((s) => ({ key: s.key, name: s.name, topic: s.topic, connected: Boolean(s.run) })),
   });
 
   await Promise.all([

@@ -18,9 +18,13 @@ export function AssessorSection({ section }: { section: Section<AssessorRecord> 
   const latest = values[0];
   const flags = Object.entries(r.flags);
 
+  const priced = r.sales.filter((x) => (x.price ?? 0) > 0);
+  const unpriced = r.sales.filter((x) => !((x.price ?? 0) > 0));
+
   return (
     <>
-      <Block id="lot" title="The lot">
+      <Receipt section={section} />
+      <Block id="lot" title="The lot" near>
         <dl className="grid grid-cols-[minmax(9rem,auto)_1fr] gap-x-6 gap-y-3">
           <Fact term="Zoning" value={r.zoning || "Not stated"} />
           <Fact term="Present use" value={r.presentUse || "Not stated"} />
@@ -43,7 +47,6 @@ export function AssessorSection({ section }: { section: Section<AssessorRecord> 
         ) : (
           <p className="mt-8">No easements, designations, nuisances or water problems are flagged by the assessor.</p>
         )}
-        <Receipt section={section} />
       </Block>
 
       <Block id="value" title="Assessed value">
@@ -81,60 +84,56 @@ export function AssessorSection({ section }: { section: Section<AssessorRecord> 
         ) : (
           <p>The assessor lists no assessed values for this parcel.</p>
         )}
-        <Receipt section={section} />
       </Block>
 
       <Block id="sales" title="Sales and transfers">
-        {r.sales.length ? (
+        {priced.length ? (
           <ol className="flex flex-col gap-5">
-            {r.sales.map((s) => (
-              <li key={s.recordingNumber}>
-                <p className="name">
-                  {s.date}: {s.price ? money(s.price) : "no price recorded"}
-                </p>
-                <p>
-                  {titleish(s.seller)} to {titleish(s.buyer)}. {s.instrument}
-                  {s.reason && s.reason !== "None" ? `, ${s.reason.toLowerCase()}` : ""}. Recording {s.recordingNumber}.
-                </p>
-              </li>
+            {priced.map((x) => (
+              <SaleItem key={x.recordingNumber} s={x} />
             ))}
           </ol>
         ) : (
-          <p>No sales are recorded for this parcel.</p>
+          <p>No sale with a price is recorded for this parcel.</p>
         )}
-        <Receipt section={section} />
+        {unpriced.length ? (
+          <details className="mt-6">
+            <summary className="link cursor-pointer">
+              {unpriced.length} {unpriced.length === 1 ? "transfer" : "transfers"} without a price (gifts, trusts, refinancing)
+            </summary>
+            <ol className="mt-4 flex flex-col gap-5">
+              {unpriced.map((x) => (
+                <SaleItem key={x.recordingNumber} s={x} />
+              ))}
+            </ol>
+          </details>
+        ) : null}
       </Block>
 
       <Block id="permits" title={`Permits on file (${r.permits.length})`}>
         {r.permits.length ? (
           <ol className="flex flex-col gap-5">
-            {r.permits.slice(0, 12).map((p) => (
-              <li key={p.number}>
-                <p className="name">
-                  {p.issued} · {p.number}
-                  {p.value ? ` · ${money(p.value)}` : ""}
-                </p>
-                <p>{p.description || "No description given."}</p>
-              </li>
+            {r.permits.slice(0, 5).map((p) => (
+              <PermitItem key={p.number} p={p} />
             ))}
           </ol>
         ) : (
           <p>The assessor has no permits on file for this parcel.</p>
         )}
-        {r.permits.length > 12 ? (
-          <p className="mt-5">
-            {r.permits.length - 12} older permits are on the{" "}
-            <a className="link" href={section.sourceUrl} target="_blank" rel="noreferrer">
-              assessor&apos;s page
-            </a>
-            .
-          </p>
+        {r.permits.length > 5 ? (
+          <details className="mt-6">
+            <summary className="link cursor-pointer">{r.permits.length - 5} older permits</summary>
+            <ol className="mt-4 flex flex-col gap-5">
+              {r.permits.slice(5).map((p) => (
+                <PermitItem key={p.number} p={p} />
+              ))}
+            </ol>
+          </details>
         ) : null}
         <p className="t-small muted mt-5">
           These are the permits the assessor recorded. The city&apos;s own permit portal, with status and inspections,
           is a separate source.
         </p>
-        <Receipt section={section} />
       </Block>
 
       {r.appeals.length ? (
@@ -147,10 +146,35 @@ export function AssessorSection({ section }: { section: Section<AssessorRecord> 
               </li>
             ))}
           </ol>
-          <Receipt section={section} />
         </Block>
       ) : null}
     </>
+  );
+}
+
+function SaleItem({ s }: { s: AssessorRecord["sales"][number] }) {
+  return (
+    <li>
+      <p className="name">
+        {s.date}: {s.price ? money(s.price) : "no price recorded"}
+      </p>
+      <p>
+        {titleish(s.seller)} to {titleish(s.buyer)}. {s.instrument}
+        {s.reason && s.reason !== "None" ? `, ${s.reason.toLowerCase()}` : ""}.
+      </p>
+    </li>
+  );
+}
+
+function PermitItem({ p }: { p: AssessorRecord["permits"][number] }) {
+  return (
+    <li>
+      <p className="name">
+        {p.issued} · {p.number}
+        {p.value ? ` · ${money(p.value)}` : ""}
+      </p>
+      <p>{p.description || "No description given."}</p>
+    </li>
   );
 }
 
@@ -164,9 +188,9 @@ export const ASSESSOR_PARTS = [
   { id: "permits", title: "Permits on file" },
 ];
 
-function Block({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
+function Block({ id, title, near, children }: { id?: string; title: string; near?: boolean; children: React.ReactNode }) {
   return (
-    <section id={id} className="mt-[clamp(64px,7vw,104px)] scroll-mt-24 first:mt-0" data-reveal>
+    <section id={id} className={`${near ? "mt-12" : "mt-[clamp(64px,7vw,104px)]"} scroll-mt-24 first:mt-0`} data-reveal>
       <h2 className="t-lead name mb-6 text-[clamp(1.5rem,1.2rem+1vw,2rem)]">{title}</h2>
       {children}
     </section>

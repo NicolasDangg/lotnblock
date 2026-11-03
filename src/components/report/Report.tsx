@@ -10,6 +10,7 @@ import type { AssessorRecord } from "@/lib/sources/assessor";
 import { assessorUrl } from "@/lib/sources/assessor";
 import type { ResolvedProperty, Section } from "@/lib/types";
 import { AssessorSection, ASSESSOR_PARTS } from "./AssessorSection";
+import { Glance } from "./Glance";
 import { parcel, titleCase } from "./format";
 
 // Leaflet touches `window`, so the map only renders in the browser.
@@ -20,7 +21,7 @@ const ParcelMap = dynamic(() => import("./ParcelMap").then((m) => m.ParcelMap), 
 
 interface State {
   property: ResolvedProperty | null;
-  sources: { key: string; name: string; connected: boolean }[];
+  sources: { key: string; name: string; topic: string; connected: boolean }[];
   outline: Outline | null | undefined; // undefined while loading, null when unavailable
   sections: Record<string, Section<unknown>>;
   error: string | null;
@@ -79,6 +80,7 @@ export function Report({ q }: { q: string }) {
   const answered = s.sources.filter((src) => s.sections[src.key]).length;
   const connected = s.sources.filter((src) => src.connected).length;
   const assessor = s.sections.assessor as Section<AssessorRecord> | undefined;
+  const unchecked = s.sources.filter((src) => !src.connected).map((src) => src.topic);
 
   return (
     <div className="min-h-svh bg-[var(--paper)]">
@@ -147,7 +149,18 @@ export function Report({ q }: { q: string }) {
                 ) : null}
               </div>
 
-              {/* Body: sources and contents beside the report */}
+              {/* The summary: what a buyer reads first */}
+              {p ? (
+                <div className="pb-[clamp(64px,8vw,112px)]">
+                  {assessor?.status === "found" && assessor.data ? (
+                    <Glance record={assessor.data} unchecked={unchecked} />
+                  ) : assessor ? null : (
+                    <p className="reading t-lead">Reading the county&apos;s record for this lot…</p>
+                  )}
+                </div>
+              ) : null}
+
+              {/* The full record: sources and contents beside it */}
               {p ? (
                 <div className="grid grid-cols-[minmax(0,1fr)] gap-x-[var(--pad)] gap-y-12 pb-[clamp(96px,12vw,160px)] lg:grid-cols-[260px_minmax(0,1fr)]">
                   <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -182,6 +195,7 @@ export function Report({ q }: { q: string }) {
                   </aside>
 
                   <div className="min-w-0">
+                    <h2 className="t-head mb-2">The full record</h2>
                     {assessor ? (
                       <AssessorSection section={assessor} />
                     ) : (
@@ -202,7 +216,7 @@ export function Report({ q }: { q: string }) {
           </Link>
           <p className="t-small max-w-[60ch] text-[var(--field-sage)]">
             Records belong to the agencies that publish them. Check the linked source before relying on any record.
-            Map tiles &copy; OpenStreetMap contributors and Esri; parcel outlines from King County GIS.
+            Street map &copy; OpenStreetMap contributors. Aerial photo and parcel lines from King County GIS.
           </p>
         </div>
       </footer>
