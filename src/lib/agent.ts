@@ -1,15 +1,18 @@
 /**
  * TinyFish Agent runs for the dossier. A portal search takes minutes, longer than a web request
  * should wait, so runs are queued and then checked on: the first call starts the run and reports
- * "running", later calls with the same key look at its progress and, once it has finished, return
- * the result.
+ * "running", later calls look at its progress and, once it has finished, return the result.
  *
- * Two guards for a public site: results are cached per key (a run costs wallet money, and permit
- * records change slowly), and a daily cap stops a busy day or a scraper from draining the wallet.
- * Both live in Vercel's Runtime Cache, shared across function instances in a region (in-memory
- * when run locally).
+ * TinyFish's own run history is the record of what has been searched, so nothing is searched twice
+ * even when the site's cache is empty (a new deployment, another region): before starting a run we
+ * look for the same goal there. A run still going is waited on; a finished one is reused; one that
+ * failed recently is reported as failed rather than retried on every page view.
+ *
+ * Guards for a public site: finished results are also cached per key (Vercel Runtime Cache), and a
+ * daily cap stops a busy day or a scraper from draining the wallet.
  */
 import { getCache } from "@vercel/functions";
+import type { Run } from "@tiny-fish/sdk";
 import { tinyfish } from "./tinyfish";
 
 const cache = getCache({ namespace: "lotnblock" });
@@ -21,17 +24,14 @@ const DAILY_LIMIT = Number(process.env.AGENT_DAILY_LIMIT ?? 25);
  * for runs that wait in TinyFish's queue (the plan runs two at a time) before they start.
  */
 const STUCK_AFTER_MS = 30 * 60_000;
+/** After a run fails, wait this long before trying the same search again. */
+const RETRY_AFTER_MS = 6 * 3600_000;
 
 export class AgentUnavailable extends Error {}
 
 export type AgentState<T> =
   | { state: "done"; data: T; retrievedAt: string; cached: boolean }
   | { state: "running"; runId: string; startedAt: string };
-
-interface Pending {
-  runId: string;
-  startedAt: string;
-}
 
 export interface AgentJob<T> {
   key: string;
@@ -59,23 +59,41 @@ export function agentJob<T>(job: AgentJob<T>): Promise<AgentState<T>> {
   return p;
 }
 
+/** The latest TinyFish run of exactly this goal on this site, within the cache window. */
+async function latestRun<T>(job: AgentJob<T>): Promise<Run | null> {
+  const since = new Date(Date.now() - job.ttlSeconds * 1000).toISOString().replace(/\.\d+Z$/, "Z");
+  const { data } = await tinyfish().runs.list({
+    goal: job.goal.slice(0, 400),
+    created_after: since,
+    sort_direction: "desc",
+    limit: 10,
+  });
+  // TinyFish stores the goal as "Navigate to <url> to complete the goal: <goal>".
+  return data.find((r) => r.goal.endsWith(job.goal) && r.goal.includes(job.url)) ?? null;
+}
+
 async function step<T>(job: AgentJob<T>): Promise<AgentState<T>> {
   const hit = (await cache.get(job.key)) as { data: T; retrievedAt: string } | null;
   if (hit) return { state: "done", ...hit, cached: true };
 
-  const pendingKey = `${job.key}:run`;
-  const pending = (await cache.get(pendingKey)) as Pending | null;
-  if (pending && Date.now() - Date.parse(pending.startedAt) < STUCK_AFTER_MS) {
-    const run = await tinyfish().runs.get(pending.runId);
-    if (run.status === "PENDING" || run.status === "RUNNING") return { state: "running", ...pending };
-    await cache.delete(pendingKey);
-    if (run.status !== "COMPLETED" || !run.result) {
-      throw new Error(run.error?.message ?? `the run ended as ${run.status.toLowerCase()}`);
+  const last = await latestRun(job);
+  if (last) {
+    const age = Date.now() - Date.parse(last.created_at);
+    const going = last.status === "PENDING" || last.status === "RUNNING";
+    if (going && age < STUCK_AFTER_MS) {
+      return { state: "running", runId: last.run_id, startedAt: last.created_at };
     }
-    if (!job.complete(run.result as T)) throw new Error("the run stopped before it finished");
-    const out = { data: run.result as T, retrievedAt: run.finished_at ?? new Date().toISOString() };
-    await cache.set(job.key, out, { ttl: job.ttlSeconds });
-    return { state: "done", ...out, cached: false };
+    if (last.status === "COMPLETED" && last.result && job.complete(last.result as T)) {
+      const out = { data: last.result as T, retrievedAt: last.finished_at ?? last.created_at };
+      await cache.set(job.key, out, { ttl: job.ttlSeconds });
+      return { state: "done", ...out, cached: false };
+    }
+    if (!going && age < RETRY_AFTER_MS) {
+      const why =
+        last.status === "COMPLETED" ? "the search stopped before it finished" : (last.error?.message ?? `the run ${last.status.toLowerCase()}`);
+      const retry = new Date(Date.parse(last.created_at) + RETRY_AFTER_MS).toISOString().slice(11, 16);
+      throw new AgentUnavailable(`${why}; it will be tried again after ${retry} UTC`);
+    }
   }
 
   const day = `agent-runs:${new Date().toISOString().slice(0, 10)}`;
@@ -93,7 +111,5 @@ async function step<T>(job: AgentJob<T>): Promise<AgentState<T>> {
     agent_config: { max_duration_seconds: job.maxSeconds ?? 240 },
   });
   if (!queued.run_id) throw new Error(queued.error?.message ?? "the run couldn't be started");
-  const started: Pending = { runId: queued.run_id, startedAt: new Date().toISOString() };
-  await cache.set(pendingKey, started, { ttl: STUCK_AFTER_MS / 1000 });
-  return { state: "running", ...started };
+  return { state: "running", runId: queued.run_id, startedAt: new Date().toISOString() };
 }
