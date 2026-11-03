@@ -20,7 +20,7 @@ export function AssessorSection({ section }: { section: Section<AssessorRecord> 
 
   return (
     <>
-      <Block title="The lot">
+      <Block id="lot" title="The lot">
         <dl className="grid grid-cols-[minmax(9rem,auto)_1fr] gap-x-6 gap-y-3">
           <Fact term="Zoning" value={r.zoning || "Not stated"} />
           <Fact term="Present use" value={r.presentUse || "Not stated"} />
@@ -46,7 +46,7 @@ export function AssessorSection({ section }: { section: Section<AssessorRecord> 
         <Receipt section={section} />
       </Block>
 
-      <Block title="Assessed value">
+      <Block id="value" title="Assessed value">
         {latest ? (
           <>
             <p className="t-head">{money(latest.totalValue)}</p>
@@ -84,7 +84,7 @@ export function AssessorSection({ section }: { section: Section<AssessorRecord> 
         <Receipt section={section} />
       </Block>
 
-      <Block title="Sales and transfers">
+      <Block id="sales" title="Sales and transfers">
         {r.sales.length ? (
           <ol className="flex flex-col gap-5">
             {r.sales.map((s) => (
@@ -105,7 +105,7 @@ export function AssessorSection({ section }: { section: Section<AssessorRecord> 
         <Receipt section={section} />
       </Block>
 
-      <Block title={`Permits on file (${r.permits.length})`}>
+      <Block id="permits" title={`Permits on file (${r.permits.length})`}>
         {r.permits.length ? (
           <ol className="flex flex-col gap-5">
             {r.permits.slice(0, 12).map((p) => (
@@ -138,7 +138,7 @@ export function AssessorSection({ section }: { section: Section<AssessorRecord> 
       </Block>
 
       {r.appeals.length ? (
-        <Block title="Value appeals">
+        <Block id="appeals" title="Value appeals">
           <ol className="flex flex-col gap-3">
             {r.appeals.map((a) => (
               <li key={a.taxYear + a.type}>
@@ -156,10 +156,18 @@ export function AssessorSection({ section }: { section: Section<AssessorRecord> 
 
 const titleish = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (c) => c.toUpperCase());
 
-function Block({ title, children }: { title: string; children: React.ReactNode }) {
+/** The parts of the assessor's record, in report order: used for the contents list. */
+export const ASSESSOR_PARTS = [
+  { id: "lot", title: "The lot" },
+  { id: "value", title: "Assessed value" },
+  { id: "sales", title: "Sales and transfers" },
+  { id: "permits", title: "Permits on file" },
+];
+
+function Block({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-[clamp(72px,8vw,128px)]" data-reveal>
-      <h2 className="t-lead name mb-6">{title}</h2>
+    <section id={id} className="mt-[clamp(64px,7vw,104px)] scroll-mt-24 first:mt-0" data-reveal>
+      <h2 className="t-lead name mb-6 text-[clamp(1.5rem,1.2rem+1vw,2rem)]">{title}</h2>
       {children}
     </section>
   );

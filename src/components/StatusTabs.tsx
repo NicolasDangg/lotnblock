@@ -67,8 +67,8 @@ export function StatusTabs({ examples }: { examples: StatusExample[] }) {
       </div>
       <div id="status-panel" role="tabpanel" key={active} className="tool-in mt-10">
         <p className="max-w-[40ch] text-[var(--ink)]">{ex.text}</p>
-        <p className="t-small mt-8 text-[var(--muted)]">How the report prints it · {ex.provenance}</p>
-        <div className="mt-3 max-w-[560px] bg-[var(--paper)] p-6" data-ui>
+        <p className="t-small mt-8 text-[var(--muted)]">In a report · {ex.provenance}</p>
+        <div className="mt-3 max-w-[560px] bg-[var(--field-input)] p-6" data-ui>
           {ex.fragment}
         </div>
       </div>

@@ -20,7 +20,7 @@ export function Gap({ section, what }: { section: Section<unknown>; what: string
     return (
       <div className="bg-[var(--field-sage)] px-6 py-5">
         <p className="name">No {what} on record.</p>
-        <p className="mt-1">The office answered and has nothing listed. That&apos;s an answer, not a gap.</p>
+        <p className="mt-1">{section.sourceName} was checked and lists none.</p>
       </div>
     );
   }
@@ -36,8 +36,7 @@ export function Gap({ section, what }: { section: Section<unknown>; what: string
     <div className="bg-[var(--field-blush)] px-6 py-5">
       <p className="name">Couldn&apos;t check {what}.</p>
       <p className="mt-1">
-        {section.sourceName} didn&apos;t give us an answer
-        {section.note ? <>: {section.note}</> : null}. Nothing here has been guessed;{" "}
+        {section.sourceName} didn&apos;t respond{section.note ? <>: {section.note}</> : null}. You can{" "}
         <a className="link" href={section.sourceUrl} target="_blank" rel="noreferrer">
           check the page yourself
         </a>

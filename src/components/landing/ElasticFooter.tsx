@@ -105,10 +105,9 @@ export function ElasticFooter({ children }: { children: React.ReactNode }) {
         {/* Centred in the band the stretch can uncover (it never exceeds ~55% of the screen). */}
         <div className="flex h-[52svh] flex-col items-center justify-center px-[var(--pad)] text-center">
           <p className="t-head">Oops, you&apos;ve scrolled past the end</p>
-          <p className="t-lead mt-3 text-[var(--field-sage)]">Let go and it springs back.</p>
+          <p className="t-lead mt-3 text-[var(--field-sage)]">The important bits are above!!</p>
         </div>
-        <p className="t-lead px-[var(--pad)] pb-6">End of the record.</p>
-        <div className="bg-[var(--paper)]">
+                <div className="bg-[var(--paper)]">
           <Pole bars={80} />
         </div>
       </div>

@@ -3,9 +3,16 @@
  * parsed result from the example lookup. The others show the request this app will send; they
  * are marked "next" and show no results until they're connected.
  */
-import type { ToolStep } from "@/components/landing/ToolsStory";
 import type { Example } from "./example";
 import { assessorUrl } from "./sources/assessor";
+
+export interface ToolStep {
+  name: string;
+  job: string;
+  state: "live" | "next";
+  /** A real request (and, when live, the real response) shown as code. */
+  code: string;
+}
 
 export function toolSteps(ex: Example): ToolStep[] {
   const p = ex.property;
@@ -40,13 +47,13 @@ export function toolSteps(ex: Example): ToolStep[] {
   return [
     {
       name: "Fetch",
-      job: "Reads pages we can link to directly: the assessor's record for a parcel, in about a second.",
+      job: "Loads a page we can link to directly, such as the assessor's page for a parcel, and returns its contents.",
       state: "live",
       code: fetchCode,
     },
     {
       name: "Agent",
-      job: "Drives a real browser through search forms with no direct links: permits, violations, tax bills, flood maps.",
+      job: "Uses a real browser to fill in search forms on sites with no direct links, like the city permit portal and FEMA's flood map.",
       state: "next",
       code: [
         "POST https://agent.tinyfish.ai/v1/automation/run-sse",
@@ -65,7 +72,7 @@ export function toolSteps(ex: Example): ToolStep[] {
     },
     {
       name: "Search",
-      job: "Finds the right official portal when an address is outside Seattle, where every city runs its own.",
+      job: "Finds the right city website for addresses outside Seattle, since each city runs its own permit portal.",
       state: "next",
       code: [
         "POST https://api.search.tinyfish.ai",
@@ -74,7 +81,7 @@ export function toolSteps(ex: Example): ToolStep[] {
     },
     {
       name: "Monitor",
-      job: "Watches the address after you've read the dossier, and tells you when a new permit or sale appears.",
+      job: "Checks the address on a schedule and alerts you when a new permit, sale or value change appears.",
       state: "next",
       code: [
         "POST https://agent.tinyfish.ai/v1/monitors",

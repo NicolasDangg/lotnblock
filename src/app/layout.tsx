@@ -3,9 +3,9 @@ import { Reveal } from "@/components/Reveal";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lot & Block · King County property records, with receipts",
+  title: "Lot & Block · King County property records",
   description:
-    "Type a King County address and read every public record on that lot, live from the official sites, each line linked to its source.",
+    "Look up public records for a King County, WA address: zoning, assessed value, sales and permits, each linked to the official source.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

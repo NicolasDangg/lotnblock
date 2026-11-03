@@ -29,10 +29,10 @@ export function ValueBars({ values }: { values: { year: number; total: number }[
   const growth = first.total ? last.total / first.total : null;
 
   return (
-    <figure className="flex h-full min-h-[300px] flex-col">
+    <figure className="flex h-[280px] flex-col md:h-[340px]">
       <figcaption className="t-lead">
         Assessed value, {first.year} to {last.year}
-        {growth ? <span className="block text-[var(--field-sage)]">{growth.toFixed(1)}× over {values.length} tax years</span> : null}
+        {growth ? <span className="block text-[var(--muted)]">{growth.toFixed(1)}× over {values.length} tax years</span> : null}
       </figcaption>
       <div
         ref={ref}
@@ -47,7 +47,7 @@ export function ValueBars({ values }: { values: { year: number; total: number }[
               title={`${v.year}: $${v.total.toLocaleString("en-US")}`}
               style={{
                 height: `${Math.max(1.5, (v.total / max) * 100)}%`,
-                background: i === values.length - 1 ? "var(--paper)" : "var(--field-sage)",
+                background: i === values.length - 1 ? "var(--accent)" : "var(--field-slate)",
                 transform: grown ? "scaleY(1)" : "scaleY(0)",
                 transition: "transform 900ms var(--ease-out)",
                 transitionDelay: `${i * 35}ms`,
@@ -56,7 +56,7 @@ export function ValueBars({ values }: { values: { year: number; total: number }[
           </div>
         ))}
       </div>
-      <div className="t-small mt-3 flex justify-between">
+      <div className="t-small mt-3 flex justify-between text-[var(--muted)]">
         <span>{first.year}</span>
         <span>{last.year}</span>
       </div>

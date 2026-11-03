@@ -20,7 +20,7 @@ export function SiteFooter() {
           <Link className="link" href="/">
             Look up an address
           </Link>
-          <Link className="link" href="/#tools">
+          <Link className="link" href="/#tinyfish">
             How TinyFish is used
           </Link>
           <a className="link" href="/api/dossier?q=1600%20E%20Olive%20Way%2C%20Seattle">
@@ -28,8 +28,7 @@ export function SiteFooter() {
           </a>
         </nav>
         <p className="max-w-[30ch]">
-          lotnblock · King County, Washington. Built for TinyFish Student Bounty Drop 002. Records are read live
-          with TinyFish.
+          Lot &amp; Block covers King County, Washington. Built for TinyFish Student Bounty Drop 002.
         </p>
       </div>
       <div className="relative px-[var(--pad)] pb-8">
@@ -37,8 +36,8 @@ export function SiteFooter() {
           Lot &amp; Block
         </p>
         <p className="t-small mt-6 max-w-[120ch]">
-          Records belong to the offices that publish them; confirm anything you&apos;ll sign against the linked
-          source. Photographs via Wikimedia Commons, none of them a property in a dossier:{" "}
+          Records belong to the agencies that publish them. Check the linked source before relying on any record.
+          Photos from Wikimedia Commons (none shows a property from a report):{" "}
           {credits.map((c, i) => (
             <span key={c.src}>
               <a className="underline" href={c.page}>

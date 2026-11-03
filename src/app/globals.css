@@ -11,7 +11,7 @@
   --surface: #b2bdc5;
   --paper: #e3e2da;
   --paper-2: #d9d8cf;
-  --field-input: #f2f1eb;
+  --field-input: #edeeec;
   --ink: #1c1c1c;
   --muted: #38424a;
   --accent: #2c3620;
@@ -53,6 +53,13 @@ body {
 }
 a {
   color: inherit;
+}
+html {
+  scrollbar-color: var(--muted) var(--paper);
+}
+input,
+textarea {
+  caret-color: var(--accent);
 }
 ::selection {
   background: var(--accent);
@@ -156,16 +163,20 @@ a {
 }
 
 /* Reveal: hidden only when JS is running, so content never depends on a script. */
+/* Content comes into focus as it arrives: a light blur sharpens while it rises. */
 html.js [data-reveal] {
   opacity: 0;
-  transform: translateY(24px);
+  filter: blur(8px);
+  transform: translateY(20px);
   transition:
     opacity var(--t-reveal) var(--ease-out),
+    filter var(--t-reveal) var(--ease-out),
     transform var(--t-reveal) var(--ease-out);
   transition-delay: calc(var(--i, 0) * 75ms);
 }
 html.js [data-reveal].in {
   opacity: 1;
+  filter: none;
   transform: none;
 }
 
@@ -202,6 +213,34 @@ html:has(.snap-page) {
 }
 .snap-end {
   scroll-snap-align: end;
+}
+
+/* The records ribbon: runs only on screen, pauses under the pointer. */
+.marquee-track {
+  animation: marquee 60s linear infinite;
+  animation-play-state: paused;
+}
+.marquee[data-running] .marquee-track {
+  animation-play-state: running;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* The one live tool breathes. */
+.live-dot {
+  animation: live 2.4s ease-in-out infinite;
+}
+@keyframes live {
+  50% {
+    opacity: 0.35;
+  }
 }
 
 /* Streaming caret. */
@@ -265,6 +304,8 @@ html.js .rise > span {
 
 @media (prefers-reduced-motion: reduce) {
   html.js .rise > span,
+  .marquee-track,
+  .live-dot,
   .tool-in,
   .tab-timer,
   .caret {
@@ -275,6 +316,7 @@ html.js .rise > span {
 @media (prefers-reduced-motion: reduce) {
   html.js [data-reveal] {
     transform: none;
+    filter: none;
     transition: opacity 200ms ease;
   }
   .drift,
