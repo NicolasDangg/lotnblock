@@ -42,6 +42,12 @@ next-env.d.ts
 
 # design-skill working files
 .taste-skill/
+.impeccable/
 
-# impeccable per-session cache
-.impeccable/hook.cache.json
+# private working notes and AI-agent files (kept local, not published)
+docs/PLAN.md
+docs/brief/
+PRODUCT.md
+AGENTS.md
+CLAUDE.md
+.claude/
