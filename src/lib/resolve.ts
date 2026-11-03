@@ -44,12 +44,15 @@ function toResolved(input: string, p: AddressPoint): ResolvedProperty {
     input,
     pin: p.PIN,
     address: p.ADDR_FULL,
-    city: p.CTYNAME || p.POSTALCTYNAME,
+    city: p.CTYNAME || titleCity(p.POSTALCTYNAME),
+    jurisdiction: p.CTYNAME || "Unincorporated King County",
     zip: p.ZIP5,
     lat: p.LAT,
     lon: p.LON,
   };
 }
+
+const titleCity = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (c) => c.toUpperCase());
 
 const sqlString = (s: string) => `'${s.replace(/'/g, "''")}'`;
 

@@ -37,6 +37,8 @@ export interface ResolvedProperty {
   pin: string;
   address: string; // e.g. "400 BROAD ST"
   city: string;
+  /** Who governs land use here: a city name, or "Unincorporated King County". */
+  jurisdiction: string;
   zip: string;
   lat: number;
   lon: number;

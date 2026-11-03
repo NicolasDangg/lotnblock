@@ -12,6 +12,12 @@ import type { ResolvedProperty, Section } from "@/lib/types";
 import { AssessorSection, ASSESSOR_PARTS } from "./AssessorSection";
 import { CitySection } from "./CitySection";
 import { Glance } from "./Glance";
+import { FloodSection, SchoolsSection, TaxSection } from "./MoreSections";
+import { WatchPanel } from "./WatchPanel";
+import type { DistrictsRecord } from "@/lib/sources/districts";
+import type { FloodRecord } from "@/lib/sources/flood";
+import type { School } from "@/lib/sources/schools";
+import type { TaxRecord } from "@/lib/sources/treasurer";
 import type { PortalRecord } from "@/lib/sources/portalRecord";
 import { parcel, titleCase } from "./format";
 
@@ -103,12 +109,16 @@ function useDossier(q: string) {
 export function Report({ q }: { q: string }) {
   const s = useDossier(q);
   const p = s.property;
-  const answered = s.sources.filter((src) => s.sections[src.key]).length;
+  const answered = s.sources.filter((src) => s.sections[src.key] && s.sections[src.key].status !== "pending").length;
+  const searching = s.sources.filter((src) => s.sections[src.key]?.status === "pending").length;
   const connected = s.sources.filter((src) => src.connected).length;
   const assessor = s.sections.assessor as Section<AssessorRecord> | undefined;
   const cityPermits = s.sections.permits as Section<PortalRecord[]> | undefined;
   const cityComplaints = s.sections.violations as Section<PortalRecord[]> | undefined;
-  const inCity = s.sources.some((src) => src.key === "permits" && src.connected) && cityPermits?.status !== "not_applicable";
+  const taxes = s.sections.treasurer as Section<TaxRecord> | undefined;
+  const flood = s.sections.flood as Section<FloodRecord> | undefined;
+  const districts = s.sections.districts as Section<DistrictsRecord> | undefined;
+  const schools = s.sections.schools as Section<School[]> | undefined;
   const unchecked = s.sources.filter((src) => !src.connected).map((src) => src.topic);
 
   return (
@@ -182,10 +192,19 @@ export function Report({ q }: { q: string }) {
               {p ? (
                 <div className="pb-[clamp(64px,8vw,112px)]">
                   {assessor?.status === "found" && assessor.data ? (
-                    <Glance record={assessor.data} unchecked={unchecked} city={[cityPermits, cityComplaints]} />
+                    <Glance
+                      record={assessor.data}
+                      unchecked={unchecked}
+                      city={[cityPermits, cityComplaints]}
+                      taxes={taxes}
+                      flood={flood}
+                      districts={districts}
+                      schools={schools}
+                    />
                   ) : assessor ? null : (
                     <p className="reading t-lead">Reading the county&apos;s record for this lot…</p>
                   )}
+                  <WatchPanel pin={p.pin} q={q} />
                 </div>
               ) : null}
 
@@ -195,9 +214,11 @@ export function Report({ q }: { q: string }) {
                   <aside className="lg:sticky lg:top-24 lg:self-start">
                     <h2 className="name">Sources</h2>
                     <p className="t-small mt-1 text-[var(--muted)]">
-                      {s.doneMs != null
-                        ? `${answered} of ${connected} working ${connected === 1 ? "source" : "sources"} answered in ${(s.doneMs / 1000).toFixed(1)} s`
-                        : `Checking ${connected} working ${connected === 1 ? "source" : "sources"}…`}
+                      {s.doneMs == null
+                        ? `Checking ${connected} sources…`
+                        : searching
+                          ? `${answered} of ${connected} sources answered; ${searching} ${searching === 1 ? "search is" : "searches are"} still running`
+                          : `All ${connected} sources answered`}
                     </p>
                     <ul className="mt-4 flex flex-col gap-2">
                       {s.sources.map((src) => (
@@ -211,7 +232,7 @@ export function Report({ q }: { q: string }) {
                       <nav className="mt-10 hidden lg:block" aria-label="Report contents">
                         <h2 className="name">In this report</h2>
                         <ul className="mt-3 flex flex-col gap-1.5">
-                          {[...ASSESSOR_PARTS, ...(inCity ? CITY_PARTS : [])].map((part) => (
+                          {[...ASSESSOR_PARTS, ...MORE_PARTS].map((part) => (
                             <li key={part.id}>
                               <a className="text-[var(--muted)] hover:text-[var(--ink)] hover:underline" href={`#${part.id}`}>
                                 {part.title}
@@ -230,17 +251,16 @@ export function Report({ q }: { q: string }) {
                     ) : (
                       <p className="reading">Fetching the King County Assessor&apos;s page…</p>
                     )}
-                    {inCity ? (
-                      <>
-                        <CitySection id="city-permits" title="City permits" what="city permits" section={cityPermits} />
-                        <CitySection
-                          id="city-complaints"
-                          title="Code complaints and violations"
-                          what="code complaints or violations"
-                          section={cityComplaints}
-                        />
-                      </>
-                    ) : null}
+                    <TaxSection section={taxes} />
+                    <FloodSection flood={flood} districts={districts} />
+                    <SchoolsSection section={schools} />
+                    <CitySection id="city-permits" title="City permits" what="city permits" section={cityPermits} />
+                    <CitySection
+                      id="city-complaints"
+                      title="Code complaints and violations"
+                      what="code complaints or violations"
+                      section={cityComplaints}
+                    />
                   </div>
                 </div>
               ) : null}
@@ -256,7 +276,7 @@ export function Report({ q }: { q: string }) {
           </Link>
           <p className="t-small max-w-[60ch] text-[var(--field-sage)]">
             Records belong to the agencies that publish them. Check the linked source before relying on any record.
-            Street map &copy; OpenStreetMap contributors. Aerial photo and parcel lines from King County GIS.
+            Street map &copy; OpenStreetMap contributors. Aerial photo and parcel lines from King County GIS. Records read live with TinyFish.
           </p>
         </div>
       </footer>
@@ -264,9 +284,14 @@ export function Report({ q }: { q: string }) {
   );
 }
 
-const CITY_PARTS = [
+const MORE_PARTS = [
+  { id: "taxes", title: "Property tax" },
+  { id: "flood", title: "Flood zone" },
+  { id: "hazards", title: "Hazards and districts" },
+  { id: "schools", title: "Nearby schools" },
   { id: "city-permits", title: "City permits" },
   { id: "city-complaints", title: "Code complaints" },
+  { id: "watch", title: "Watch this address" },
 ];
 
 function MapPlaceholder({ text }: { text: string }) {

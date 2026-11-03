@@ -1,6 +1,10 @@
 import { highlights, lastSale, monthYear, valueChange, zoneInPlainWords, type Highlight } from "@/lib/highlights";
 import type { AssessorRecord } from "@/lib/sources/assessor";
 import { CLOSED, type PortalRecord } from "@/lib/sources/portalRecord";
+import type { DistrictsRecord } from "@/lib/sources/districts";
+import type { FloodRecord } from "@/lib/sources/flood";
+import type { School } from "@/lib/sources/schools";
+import type { TaxRecord } from "@/lib/sources/treasurer";
 import type { Section } from "@/lib/types";
 import { count, money } from "./format";
 
@@ -12,11 +16,19 @@ export function Glance({
   record,
   unchecked,
   city = [],
+  taxes,
+  flood,
+  districts,
+  schools,
 }: {
   record: AssessorRecord;
   unchecked: string[];
   /** The city portal's permits and complaints sections, when they have answered. */
   city?: (Section<PortalRecord[]> | undefined)[];
+  taxes?: Section<TaxRecord>;
+  flood?: Section<FloodRecord>;
+  districts?: Section<DistrictsRecord>;
+  schools?: Section<School[]>;
 }) {
   const vc = valueChange(record);
   const sale = lastSale(record);
@@ -33,6 +45,7 @@ export function Glance({
       title: `Open with the city: ${r.type || r.number}`,
       detail: `${r.status || "Status not shown"}, since ${r.date}.`,
     })),
+    ...fromSources(taxes, flood, districts, schools),
     ...highlights(record, unchecked),
   ];
   const watch = items.filter((h) => h.tone === "watch");
@@ -122,6 +135,61 @@ function Group({ title, items, ground }: { title: string; items: Highlight[]; gr
       </ul>
     </section>
   );
+}
+
+/** Words the county uses for "nothing mapped here". Anything else is worth a look. */
+const QUIET = /^(none( mapped)?|no|does not apply|check with jurisdiction|not listed|under 20 ppm)$/i;
+
+/** "Worth knowing" lines from the tax, flood, hazard and school sources. */
+function fromSources(
+  taxes?: Section<TaxRecord>,
+  flood?: Section<FloodRecord>,
+  districts?: Section<DistrictsRecord>,
+  schools?: Section<School[]>,
+): Highlight[] {
+  const out: Highlight[] = [];
+  const t = taxes?.status === "found" ? taxes.data : null;
+  if (t) {
+    const due = t.years.reduce((sum, y) => sum + (y.due ?? 0), 0);
+    if (due > 0) out.push({ tone: "watch", title: `${money(due)} property tax due`, detail: "As listed by the King County Treasurer." });
+    if (/delinquen|foreclos/i.test(t.notice)) out.push({ tone: "watch", title: "Tax account warning", detail: t.notice });
+    const last = t.years[0];
+    if (last && due === 0) {
+      out.push({ tone: "note", title: `${last.year} property tax: ${money(last.billed)}`, detail: "Paid in full, per the King County Treasurer." });
+    }
+  }
+  const f = flood?.status === "found" ? flood.data : null;
+  if (f?.specialFloodHazardArea) {
+    out.push({ tone: "watch", title: `High-risk flood zone ${f.zone}`, detail: "FEMA maps it in a special flood hazard area; lenders require flood insurance." });
+  } else if (f) {
+    out.push({ tone: "note", title: `Flood zone ${f.zone}`, detail: "Outside FEMA's high-risk flood areas." });
+  }
+  const d = districts?.status === "found" ? districts.data : null;
+  if (d) {
+    const hazards: [string, string][] = [
+      ["100-year floodplain", d.floodplain],
+      ["Landslide hazard", d.landslide],
+      ["Erosion hazard", d.erosion],
+      ["Seismic hazard", d.seismic],
+      ["Coal mine hazard", d.coalMine],
+      ["Wetlands", d.wetlands],
+      ["Smelter plume arsenic", d.smelterPlume],
+      ["Development conditions", d.developmentConditions],
+    ];
+    for (const [name, value] of hazards) {
+      if (!QUIET.test(value.trim())) out.push({ tone: "watch", title: `${name}: ${value}`, detail: "Mapped by King County's districts report." });
+    }
+  }
+  const list = schools?.status === "found" ? schools.data ?? [] : [];
+  if (list.length) {
+    const near = list[0];
+    out.push({
+      tone: "note",
+      title: `${list.length} public schools within 1.5 miles`,
+      detail: `Nearest: ${near.name}${near.grades ? ` (grades ${near.grades})` : ""}, ${near.miles} mi.`,
+    });
+  }
+  return out;
 }
 
 function changeWords(change: number, year: number) {

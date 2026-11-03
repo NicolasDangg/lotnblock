@@ -21,7 +21,7 @@ export function CitySection({
         {section?.status === "found" && section.data ? ` (${section.data.length})` : ""}
       </h2>
       {!section || section.status === "pending" ? (
-        <p className="reading">Searching Seattle&apos;s permit portal. This takes a few minutes; the rest of the report is ready now.</p>
+        <p className="reading">Searching the city&apos;s permit portal with TinyFish Agent. This takes a few minutes; the rest of the report is ready now.</p>
       ) : section.status === "found" && section.data ? (
         <Records rows={section.data} />
       ) : (

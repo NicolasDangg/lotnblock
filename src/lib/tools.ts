@@ -1,7 +1,6 @@
 /**
- * What the landing page shows for each TinyFish tool. Fetch shows the real request and the real
- * parsed result from the example lookup. The others show the request this app will send; they
- * are marked "next" and show no results until they're connected.
+ * What the landing page shows for each TinyFish tool: the request this app really sends for the
+ * example address. Fetch also shows the real parsed result from the example lookup.
  */
 import type { Example } from "./example";
 import { assessorUrl } from "./sources/assessor";
@@ -53,17 +52,17 @@ export function toolSteps(ex: Example): ToolStep[] {
     },
     {
       name: "Agent",
-      job: "Uses a real browser to fill in search forms on sites with no direct links, like the city permit portal and FEMA's flood map.",
-      state: "next",
+      job: "Uses a real browser to fill in search forms on sites with no direct links: the city permit portal and the county's tax lookup. Runs are queued, cached for a day and capped per day.",
+      state: "live",
       code: [
-        "POST https://agent.tinyfish.ai/v1/automation/run-sse",
+        "POST https://agent.tinyfish.ai/v1/automation/run-async",
         JSON.stringify(
           {
-            url: "https://services.seattle.gov/portal/",
+            url: "https://services.seattle.gov/Portal/Cap/CapHome.aspx?module=DPDGeneral",
             goal:
-              `Search all records for the address "${address}". List every building permit and code ` +
-              'complaint as JSON {"records":[{"number","type","status","opened","description","url"}]}. ' +
-              'If none match, return {"records":[]}. If blocked, return {"records":[],"error":"<reason>"}.',
+              `Type exactly "${p?.address ?? "the address"}" into the search box and run the search. Read every row of the ` +
+              "records table, going through every page… Set search_completed to true only if you reached the results table.",
+            output_schema: { search_completed: "boolean", records: "[{record_number, record_type, status, date, description}]" },
           },
           null,
           2,
@@ -72,27 +71,37 @@ export function toolSteps(ex: Example): ToolStep[] {
     },
     {
       name: "Search",
-      job: "Finds the right city website for addresses outside Seattle, since each city runs its own permit portal.",
-      state: "next",
+      job: "Finds the official permit search for addresses outside Seattle, since each city runs its own (many share MyBuildingPermit). Agent then searches it.",
+      state: "live",
       code: [
         "POST https://api.search.tinyfish.ai",
-        JSON.stringify({ query: "Bellevue WA building permit search by address", include_domains: "bellevuewa.gov" }, null, 2),
+        JSON.stringify(
+          {
+            query: "Bellevue WA building permit search by address",
+            purpose: "Find the official online permit search where anyone can look up the permits issued at a street address",
+          },
+          null,
+          2,
+        ),
+        "",
+        "// kept: official hosts only (.gov, .us, mybuildingpermit.com), ranked by \"permit\" + \"search\"",
+        '// → https://permitsearch.mybuildingpermit.com/',
       ].join("\n"),
     },
     {
       name: "Monitor",
-      job: "Checks the address on a schedule and alerts you when a new permit, sale or value change appears.",
-      state: "next",
+      job: "Re-reads a watched address's county records every morning, compares them with the day before and posts what changed: a new permit, a sale, a new owner or value.",
+      state: "live",
       code: [
         "POST https://agent.tinyfish.ai/v1/monitors",
         JSON.stringify(
           {
             type: "fetch",
-            name: `Watch ${address}`,
-            config: { url, format: "markdown" },
+            name: `Lot & Block: ${address}`,
+            config: { url: `https://lotnblock.vercel.app/api/watch/snapshot?pin=${p?.pin ?? "…"}`, format: "markdown" },
             schedule_cron: "CRON_TZ=America/Los_Angeles 0 7 * * *",
-            purpose: "A new permit, sale, appeal or change in assessed value appears for this parcel",
-            webhook_url: "https://lotnblock…/api/monitor",
+            purpose: "A new building permit, a new sale or transfer, a change of owner, a new assessed value, or a new hazard flag appears for this parcel.",
+            webhook_url: "https://lotnblock.vercel.app/api/watch/hook?pin=…&sig=…",
           },
           null,
           2,

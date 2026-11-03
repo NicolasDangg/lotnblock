@@ -167,9 +167,9 @@ export default async function Home() {
               Where records come from
             </h2>
             <p className="max-w-[52ch]" data-reveal style={{ ["--i" as string]: 1 }}>
-              Every record comes from a government website, fetched when you search. Nothing comes from listing
-              sites or estimates. {connected} of {SOURCES.length} sources work so far; reports mark the others as not
-              checked.
+              Every record comes from a city, county or federal website, read live when you search. Nothing comes
+              from listing sites or estimates. {connected === SOURCES.length ? `All ${connected}` : `${connected} of ${SOURCES.length}`}{" "}
+              sources are working; when one can&apos;t be read, the report says so instead of guessing.
             </p>
           </div>
           <div className="mt-12" data-reveal style={{ ["--i" as string]: 2 }}>
@@ -179,7 +179,7 @@ export default async function Home() {
                   <th className="pb-3 pl-4 font-normal">Source</th>
                   <th className="hidden pb-3 font-normal md:table-cell">Level</th>
                   <th className="hidden pb-3 font-normal md:table-cell">What you get</th>
-                  <th className="pr-4 pb-3 text-right font-normal">Status</th>
+                  <th className="pr-4 pb-3 text-right font-normal">Read with</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,7 +189,7 @@ export default async function Home() {
                     <td className="hidden py-4 pr-6 capitalize md:table-cell">{s.level}</td>
                     <td className="hidden py-4 pr-6 md:table-cell">{s.provides}</td>
                     <td className={`py-4 pr-4 text-right whitespace-nowrap ${s.run ? "name" : "text-[var(--muted)]"}`}>
-                      {s.run ? `Working (${VIA_LABEL[s.via]})` : "Planned"}
+                      {s.run ? VIA_LABEL[s.via] : "Planned"}
                     </td>
                   </tr>
                 ))}
@@ -275,8 +275,8 @@ export default async function Home() {
               How TinyFish works
             </h2>
             <p className="max-w-[52ch] text-[var(--field-sage)]" data-reveal style={{ ["--i" as string]: 1 }}>
-              Government property sites have no API, so TinyFish opens them the way a person would. Fetch works today.
-              Agent, Search and Monitor come next; each block below shows the request it will send.
+              Government property sites have no API, so TinyFish opens them the way a person would. Each block below
+              is the request this site sends for the example address.
             </p>
           </div>
           <div className="mt-[clamp(64px,8vw,112px)]">
@@ -422,7 +422,7 @@ function statusExamples(ex: Example): StatusExample[] {
         a && s && a.appeals.length === 0 ? (
           <Gap section={{ ...s, status: "none" }} what="value appeals" />
         ) : (
-          <Gap section={example({ status: "none", sourceName: "Seattle code compliance" })} what="violations" />
+          <Gap section={example({ status: "none", sourceName: "Seattle code complaints" })} what="violations" />
         ),
     },
     {
@@ -442,16 +442,16 @@ function statusExamples(ex: Example): StatusExample[] {
     },
     {
       label: "Not covered",
-      text: "The source doesn't cover this address. Seattle's permit portal, for example, has no records for a house in Bellevue.",
+      text: "The source doesn't cover this address. Seattle's code complaints, for example, can't be searched for a house in Bellevue.",
       provenance: "example wording",
       fragment: (
         <Gap
           section={example({
             status: "not_applicable",
-            sourceName: "Seattle Services Portal",
-            note: "Seattle's permit portal only covers addresses inside Seattle; this one is in Bellevue.",
+            sourceName: "Seattle code complaints",
+            note: "Code complaints are searched in Seattle only; ask Bellevue about complaints at this address.",
           })}
-          what="permits"
+          what="code complaints"
         />
       ),
     },
