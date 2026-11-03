@@ -16,8 +16,11 @@ const cache = getCache({ namespace: "lotnblock" });
 
 /** Live Agent runs allowed per day across the site. Set AGENT_DAILY_LIMIT to change it; 0 turns them off. */
 const DAILY_LIMIT = Number(process.env.AGENT_DAILY_LIMIT ?? 25);
-/** A run still going after this long is treated as stuck, and a fresh one may start. */
-const STUCK_AFTER_MS = 12 * 60_000;
+/**
+ * A run still going after this long is treated as stuck, and a fresh one may start. Long enough
+ * for runs that wait in TinyFish's queue (the plan runs two at a time) before they start.
+ */
+const STUCK_AFTER_MS = 30 * 60_000;
 
 export class AgentUnavailable extends Error {}
 
