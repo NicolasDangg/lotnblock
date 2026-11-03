@@ -14,7 +14,9 @@ export type SectionStatus =
   /** We couldn't get an answer: site down, blocked, timed out, or unparseable. */
   | "source_error"
   /** This source doesn't cover the property (e.g. a Seattle-only portal for a Bellevue address). */
-  | "not_applicable";
+  | "not_applicable"
+  /** A slow source (a TinyFish Agent run) is still working; ask /api/section again for the answer. */
+  | "pending";
 
 export interface Section<T> {
   status: SectionStatus;

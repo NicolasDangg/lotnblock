@@ -10,7 +10,9 @@ import type { AssessorRecord } from "@/lib/sources/assessor";
 import { assessorUrl } from "@/lib/sources/assessor";
 import type { ResolvedProperty, Section } from "@/lib/types";
 import { AssessorSection, ASSESSOR_PARTS } from "./AssessorSection";
+import { CitySection } from "./CitySection";
 import { Glance } from "./Glance";
+import type { PortalRecord } from "@/lib/sources/portalRecord";
 import { parcel, titleCase } from "./format";
 
 // Leaflet touches `window`, so the map only renders in the browser.
@@ -35,7 +37,15 @@ function useDossier(q: string) {
   const [state, setState] = useState<State>(EMPTY);
   useEffect(() => {
     const ctrl = new AbortController();
-    const apply = (e: DossierEvent) =>
+    // Sections still waiting on a TinyFish Agent run, and the parcel to ask about them with.
+    const waiting = new Set<string>();
+    let pin = "";
+    const apply = (e: DossierEvent) => {
+      if (e.type === "property") pin = e.property.pin;
+      if (e.type === "section") {
+        if (e.section.status === "pending") waiting.add(e.key);
+        else waiting.delete(e.key);
+      }
       setState((s): State => {
         switch (e.type) {
           case "property":
@@ -50,6 +60,7 @@ function useDossier(q: string) {
             return { ...s, doneMs: e.ms };
         }
       });
+    };
     (async () => {
       setState(EMPTY);
       try {
@@ -64,6 +75,21 @@ function useDossier(q: string) {
           const lines = buf.split("\n");
           buf = lines.pop() ?? "";
           for (const line of lines) if (line.trim()) apply(JSON.parse(line));
+        }
+        // Ask again for slow sections every 10 s, for up to 10 minutes.
+        const until = Date.now() + 10 * 60_000;
+        while (waiting.size && Date.now() < until) {
+          await new Promise((r) => setTimeout(r, 10_000));
+          if (ctrl.signal.aborted) return;
+          await Promise.all(
+            [...waiting].map(async (key) => {
+              const r = await fetch(`/api/section?q=${pin}&key=${key}`, { signal: ctrl.signal });
+              if (r.ok) {
+                const body = (await r.json()) as { key: string; section: Section<unknown> };
+                apply({ type: "section", key: body.key, section: body.section });
+              }
+            }),
+          );
         }
       } catch (err) {
         if ((err as Error).name !== "AbortError") apply({ type: "error", message: "The lookup stopped before it finished." });
@@ -80,6 +106,9 @@ export function Report({ q }: { q: string }) {
   const answered = s.sources.filter((src) => s.sections[src.key]).length;
   const connected = s.sources.filter((src) => src.connected).length;
   const assessor = s.sections.assessor as Section<AssessorRecord> | undefined;
+  const cityPermits = s.sections.permits as Section<PortalRecord[]> | undefined;
+  const cityComplaints = s.sections.violations as Section<PortalRecord[]> | undefined;
+  const inCity = s.sources.some((src) => src.key === "permits" && src.connected) && cityPermits?.status !== "not_applicable";
   const unchecked = s.sources.filter((src) => !src.connected).map((src) => src.topic);
 
   return (
@@ -153,7 +182,7 @@ export function Report({ q }: { q: string }) {
               {p ? (
                 <div className="pb-[clamp(64px,8vw,112px)]">
                   {assessor?.status === "found" && assessor.data ? (
-                    <Glance record={assessor.data} unchecked={unchecked} />
+                    <Glance record={assessor.data} unchecked={unchecked} city={[cityPermits, cityComplaints]} />
                   ) : assessor ? null : (
                     <p className="reading t-lead">Reading the county&apos;s record for this lot…</p>
                   )}
@@ -182,7 +211,7 @@ export function Report({ q }: { q: string }) {
                       <nav className="mt-10 hidden lg:block" aria-label="Report contents">
                         <h2 className="name">In this report</h2>
                         <ul className="mt-3 flex flex-col gap-1.5">
-                          {ASSESSOR_PARTS.map((part) => (
+                          {[...ASSESSOR_PARTS, ...(inCity ? CITY_PARTS : [])].map((part) => (
                             <li key={part.id}>
                               <a className="text-[var(--muted)] hover:text-[var(--ink)] hover:underline" href={`#${part.id}`}>
                                 {part.title}
@@ -201,6 +230,17 @@ export function Report({ q }: { q: string }) {
                     ) : (
                       <p className="reading">Fetching the King County Assessor&apos;s page…</p>
                     )}
+                    {inCity ? (
+                      <>
+                        <CitySection id="city-permits" title="City permits" what="city permits" section={cityPermits} />
+                        <CitySection
+                          id="city-complaints"
+                          title="Code complaints and violations"
+                          what="code complaints or violations"
+                          section={cityComplaints}
+                        />
+                      </>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -224,6 +264,11 @@ export function Report({ q }: { q: string }) {
   );
 }
 
+const CITY_PARTS = [
+  { id: "city-permits", title: "City permits" },
+  { id: "city-complaints", title: "Code complaints" },
+];
+
 function MapPlaceholder({ text }: { text: string }) {
   return (
     <div className="flex h-full w-full items-center justify-center bg-[var(--paper-2)]">
@@ -237,6 +282,7 @@ const STATE_TEXT = {
   none: "None on record",
   source_error: "Couldn't check",
   not_applicable: "Not covered",
+  pending: "Searching…",
 } as const;
 
 function SourceState({ connected, section }: { connected: boolean; section?: Section<unknown> }) {

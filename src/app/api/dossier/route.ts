@@ -1,5 +1,8 @@
 import { buildDossier } from "@/lib/dossier";
 
+// The city portal check is a TinyFish Agent run that can take a few minutes.
+export const maxDuration = 300;
+
 /**
  * GET /api/dossier?q=<address or parcel>
  * Streams newline-delimited JSON events (see DossierEvent) as each source answers.

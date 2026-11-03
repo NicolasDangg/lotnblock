@@ -1,0 +1,11 @@
+/** A Seattle Services Portal record, shared by the server source and the report UI. */
+export interface PortalRecord {
+  number: string;
+  type: string;
+  status: string;
+  date: string;
+  description: string;
+}
+
+/** Statuses that mean the record is finished. Anything else is still open. */
+export const CLOSED = /complete|closed|finaled|final|issued|expired|withdrawn|cancel|void|approved/i;

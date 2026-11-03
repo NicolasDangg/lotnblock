@@ -1,17 +1,40 @@
 import { highlights, lastSale, monthYear, valueChange, zoneInPlainWords, type Highlight } from "@/lib/highlights";
 import type { AssessorRecord } from "@/lib/sources/assessor";
+import { CLOSED, type PortalRecord } from "@/lib/sources/portalRecord";
+import type { Section } from "@/lib/types";
 import { count, money } from "./format";
 
 /**
  * The top of the report: four figures a buyer reads first, then the facts worth knowing.
  * Everything below it is the full record for anyone who wants to check the working.
  */
-export function Glance({ record, unchecked }: { record: AssessorRecord; unchecked: string[] }) {
+export function Glance({
+  record,
+  unchecked,
+  city = [],
+}: {
+  record: AssessorRecord;
+  unchecked: string[];
+  /** The city portal's permits and complaints sections, when they have answered. */
+  city?: (Section<PortalRecord[]> | undefined)[];
+}) {
   const vc = valueChange(record);
   const sale = lastSale(record);
   const zone = zoneInPlainWords(record.zoning, record.jurisdiction);
   const latestPermit = record.permits[0];
-  const items = highlights(record, unchecked);
+  const permitsSection = city[0];
+  // The city portal is the permit authority; once it has answered, its count replaces the assessor's.
+  const cityPermits =
+    permitsSection?.status === "found" ? permitsSection.data : permitsSection?.status === "none" ? [] : null;
+  const openCity = city.flatMap((c) => c?.data ?? []).filter((r) => !CLOSED.test(r.status));
+  const items: Highlight[] = [
+    ...openCity.map((r) => ({
+      tone: "watch" as const,
+      title: `Open with the city: ${r.type || r.number}`,
+      detail: `${r.status || "Status not shown"}, since ${r.date}.`,
+    })),
+    ...highlights(record, unchecked),
+  ];
   const watch = items.filter((h) => h.tone === "watch");
   const notes = items.filter((h) => h.tone === "note");
   const gap = items.find((h) => h.tone === "gap");
@@ -38,11 +61,19 @@ export function Glance({ record, unchecked }: { record: AssessorRecord; unchecke
           label={`Lot, zoned ${record.zoning || "not stated"}`}
           sub={zone ?? undefined}
         />
-        <Figure
-          value={String(record.permits.length)}
-          label={record.permits.length === 1 ? "Permit on file" : "Permits on file"}
-          sub={latestPermit ? `Latest ${monthYear(latestPermit.issued)}` : "None recorded by the assessor"}
-        />
+        {cityPermits ? (
+          <Figure
+            value={String(cityPermits.length)}
+            label={cityPermits.length === 1 ? "City permit" : "City permits"}
+            sub={cityPermits[0] ? `Latest ${cityPermits[0].date}` : "None at the city portal"}
+          />
+        ) : (
+          <Figure
+            value={String(record.permits.length)}
+            label={record.permits.length === 1 ? "Permit on file" : "Permits on file"}
+            sub={latestPermit ? `Latest ${monthYear(latestPermit.issued)}` : "None recorded by the assessor"}
+          />
+        )}
       </dl>
 
       {watch.length || notes.length ? (

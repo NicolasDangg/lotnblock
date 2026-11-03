@@ -4,6 +4,7 @@
  */
 import type { ResolvedProperty, Section, Via } from "../types";
 import { assessor } from "./assessor";
+import { seattlePermits, seattleViolations } from "./seattlePortal";
 
 export interface SourceInfo {
   key: string;
@@ -27,8 +28,8 @@ export const SOURCES: SourceInfo[] = [
     run: assessor,
   },
   { key: "treasurer", name: "King County Treasurer", level: "county", provides: "Tax billed, paid and due", topic: "tax bills", via: "agent" },
-  { key: "permits", name: "Seattle Services Portal", level: "city", provides: "Building permits and their status", topic: "city permits", via: "agent" },
-  { key: "violations", name: "Seattle code compliance", level: "city", provides: "Violations and complaints", topic: "code violations", via: "agent" },
+  { key: "permits", name: "Seattle Services Portal", level: "city", provides: "Building permits and their status", topic: "city permits", via: "agent", run: seattlePermits },
+  { key: "violations", name: "Seattle code complaints", level: "city", provides: "Violations and complaints", topic: "code violations", via: "agent", run: seattleViolations },
   { key: "flood", name: "FEMA Flood Map Service Center", level: "federal", provides: "Flood zone and map panel", topic: "the flood zone", via: "agent" },
   { key: "schools", name: "Seattle Public Schools", level: "district", provides: "Assigned elementary, middle and high school", topic: "school assignment", via: "agent" },
 ];
