@@ -57,47 +57,32 @@ export function valueChange(r: AssessorRecord) {
   return { now, before, change: (now.totalValue! - before.totalValue!) / before.totalValue! };
 }
 
-const FLAG_WORDS: Record<string, string> = {
-  "traffic noise": "road noise",
-  "airport noise": "aircraft noise",
-  "power lines": "nearby power lines",
-  "historic site": "a historic designation",
-  "easements": "an easement",
-  "water problems": "a water problem",
-  "contamination": "possible contamination",
-  "wetland": "a wetland",
-  "steep slope": "a steep slope",
-};
-
 export function highlights(r: AssessorRecord, unchecked: string[], now = new Date()): Highlight[] {
   const out: Highlight[] = [];
 
   for (const [name, level] of Object.entries(r.flags)) {
     const lvl = level.toLowerCase();
-    const what = FLAG_WORDS[name.toLowerCase()] ?? name.toLowerCase();
-    const serious = !/^(low|minor|moderate|no|none)$/.test(lvl);
     out.push({
-      tone: serious ? "watch" : "note",
+      tone: /^(low|minor|moderate|no|none)$/.test(lvl) ? "note" : "watch",
       title: `${name.charAt(0)}${name.slice(1).toLowerCase()}: ${lvl}`,
-      detail: `The assessor records ${what} at this lot, rated ${lvl}.`,
+      detail: "As rated by the assessor.",
     });
   }
 
   if (r.propertyType && r.propertyType !== "R" && r.presentUse) {
     out.push({
       tone: "watch",
-      title: `Used as ${r.presentUse.toLowerCase()}`,
-      detail: "The assessor lists this lot as non-residential, so it is valued and taxed as a business property.",
+      title: "Not a home",
+      detail: `Listed as ${r.presentUse.toLowerCase()}, so it is valued and taxed as a business.`,
     });
   }
 
   const vc = valueChange(r);
   if (vc && Math.abs(vc.change) >= 0.1) {
-    const pct = Math.round(Math.abs(vc.change) * 100);
     out.push({
       tone: "note",
-      title: `Value ${vc.change > 0 ? "up" : "down"} ${pct}% in a year`,
-      detail: `Assessed at ${usd(vc.now.totalValue)} for ${vc.now.taxYear} taxes, against ${usd(vc.before.totalValue)} for ${vc.before.taxYear}.`,
+      title: `Value ${vc.change > 0 ? "up" : "down"} ${Math.round(Math.abs(vc.change) * 100)}% in a year`,
+      detail: `${usd(vc.before.totalValue)} in ${vc.before.taxYear}, ${usd(vc.now.totalValue)} in ${vc.now.taxYear}.`,
     });
   }
 
@@ -108,7 +93,7 @@ export function highlights(r: AssessorRecord, unchecked: string[], now = new Dat
   if (recent) {
     out.push({
       tone: "note",
-      title: `Work permitted ${monthYear(recent.issued)}`,
+      title: `Recent work, ${monthYear(recent.issued)}`,
       detail: recent.description || `Permit ${recent.number}.`,
     });
   }
@@ -119,7 +104,7 @@ export function highlights(r: AssessorRecord, unchecked: string[], now = new Dat
     out.push({
       tone: "note",
       title: `Same owner since ${since.getFullYear()}`,
-      detail: `The last sale was ${monthYear(sale.date)}, so the price paid says little about today's value.`,
+      detail: "The old sale price says little about today's value.",
     });
   }
 
@@ -128,16 +113,12 @@ export function highlights(r: AssessorRecord, unchecked: string[], now = new Dat
     out.push({
       tone: "note",
       title: `Value appealed for ${a.taxYear}`,
-      detail: `The owner challenged the assessment; the decision was ${a.decision.toLowerCase() || "not stated"}.`,
+      detail: `Decision: ${a.decision.toLowerCase() || "not stated"}.`,
     });
   }
 
   if (unchecked.length) {
-    out.push({
-      tone: "gap",
-      title: "Not checked yet",
-      detail: `${list(unchecked)}. These sources aren't connected yet, so check them yourself before deciding.`,
-    });
+    out.push({ tone: "gap", title: "Not checked yet", detail: `${list(unchecked)}.` });
   }
 
   const order = { watch: 0, note: 1, gap: 2 };

@@ -12,6 +12,9 @@ export function Glance({ record, unchecked }: { record: AssessorRecord; unchecke
   const zone = zoneInPlainWords(record.zoning, record.jurisdiction);
   const latestPermit = record.permits[0];
   const items = highlights(record, unchecked);
+  const watch = items.filter((h) => h.tone === "watch");
+  const notes = items.filter((h) => h.tone === "note");
+  const gap = items.find((h) => h.tone === "gap");
 
   return (
     <section aria-labelledby="glance-h" data-reveal>
@@ -42,15 +45,20 @@ export function Glance({ record, unchecked }: { record: AssessorRecord; unchecke
         />
       </dl>
 
-      {items.length ? (
-        <div className="mt-10">
+      {watch.length || notes.length ? (
+        <div className="mt-12">
           <h2 className="t-lead name">Worth knowing</h2>
-          <ul className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2">
-            {items.map((h) => (
-              <Item key={h.title} h={h} />
-            ))}
-          </ul>
+          <div className={`mt-5 grid grid-cols-[minmax(0,1fr)] gap-3 ${watch.length && notes.length ? "md:grid-cols-2" : ""}`}>
+            {watch.length ? <Group title="Check before you decide" items={watch} ground="bg-[var(--field-blush)]" /> : null}
+            {notes.length ? <Group title="Good to know" items={notes} ground="bg-[var(--field-input)]" /> : null}
+          </div>
         </div>
+      ) : null}
+
+      {gap ? (
+        <p className="mt-3 bg-[var(--field-slate)] px-6 py-4">
+          <span className="name">{gap.title}:</span> {gap.detail.replace(/\.$/, "")}. Check these yourself before deciding.
+        </p>
       ) : null}
     </section>
   );
@@ -58,29 +66,30 @@ export function Glance({ record, unchecked }: { record: AssessorRecord; unchecke
 
 function Figure({ value, label, sub, accent }: { value: string; label: string; sub?: string; accent?: boolean }) {
   return (
-    <div className={`flex flex-col px-6 py-6 ${accent ? "bg-[var(--accent)] text-[var(--accent-ink)]" : "bg-[var(--field-input)]"}`}>
+    <div className={`@container flex min-w-0 flex-col px-6 py-6 ${accent ? "bg-[var(--accent)] text-[var(--accent-ink)]" : "bg-[var(--field-input)]"}`}>
       {/* dt first in the source (valid markup), the figure first on screen */}
-      <dt className="name order-2 mt-2">{label}</dt>
-      <dd className="t-head order-1 [font-variant-numeric:tabular-nums]">{value}</dd>
+      <dt className="name order-2 mt-3">{label}</dt>
+      <dd className="order-1 text-[clamp(1.75rem,14cqi,3.25rem)] leading-none tracking-[-0.02em] whitespace-nowrap [font-variant-numeric:tabular-nums]">
+        {value}
+      </dd>
       {sub ? <dd className={`order-3 mt-1 ${accent ? "text-[var(--field-sage)]" : "text-[var(--muted)]"}`}>{sub}</dd> : null}
     </div>
   );
 }
 
-const TONE: Record<Highlight["tone"], { bg: string; tag: string }> = {
-  watch: { bg: "bg-[var(--field-blush)]", tag: "Check this" },
-  note: { bg: "bg-[var(--field-input)]", tag: "Good to know" },
-  gap: { bg: "bg-[var(--field-slate)]", tag: "Missing" },
-};
-
-function Item({ h }: { h: Highlight }) {
-  const t = TONE[h.tone];
+function Group({ title, items, ground }: { title: string; items: Highlight[]; ground: string }) {
   return (
-    <li className={`${t.bg} px-5 py-4`}>
-      <p className="name">{h.title}</p>
-      <p className="mt-1">{h.detail}</p>
-      <p className="t-small mt-2 text-[var(--muted)]">{t.tag}</p>
-    </li>
+    <section className={`${ground} px-6 py-5`}>
+      <h3 className="name">{title}</h3>
+      <ul className="mt-3 flex flex-col gap-4">
+        {items.map((h) => (
+          <li key={h.title}>
+            <p>{h.title}</p>
+            <p className="t-small text-[var(--muted)]">{h.detail}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
