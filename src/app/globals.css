@@ -1,0 +1,288 @@
+@import "tailwindcss";
+
+/*
+ * Direction: "The split stage" (tasteskill draw, seed 524085766).
+ * Type: Switzer, one roman weight plus 500 for names and links. Colour: slate, sage, blush, olive.
+ * Square corners everywhere; one button shape. Motion follows Apple's fluid-interface rules:
+ * feedback on press, critically damped (no overshoot), transform and opacity only.
+ */
+:root {
+  --bg: #a6b3bc;
+  --surface: #b2bdc5;
+  --paper: #e3e2da;
+  --paper-2: #d9d8cf;
+  --field-input: #f2f1eb;
+  --ink: #1c1c1c;
+  --muted: #38424a;
+  --accent: #2c3620;
+  --accent-ink: #e3e2da;
+  --field-slate: #a6b3bc;
+  --field-sage: #b7c8be;
+  --field-blush: #d6c4b8;
+
+  --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --step-head: clamp(2rem, 1.3rem + 3.2vw, 4rem);
+  --step-mark: clamp(4.5rem, 17vw, 18rem);
+
+  --gap: 12px;
+  --pad: clamp(24px, 4vw, 64px);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+  --t-press: 120ms;
+  --t-hover: 180ms;
+  --t-reveal: 800ms;
+}
+
+@layer base {
+html {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Switzer", ui-sans-serif, system-ui, sans-serif;
+  font-size: 100%;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body {
+  font-size: var(--step-body);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  font-feature-settings: "tnum" 1;
+}
+a {
+  color: inherit;
+}
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+}
+
+@layer components {
+/* Type roles. Tracking tightens as size grows (Apple: size-specific tracking). */
+.t-head {
+  font-size: var(--step-head);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  font-weight: 400;
+  text-wrap: balance;
+}
+.t-lead {
+  font-size: var(--step-lead);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+.t-small {
+  font-size: var(--step-small);
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+.t-mark {
+  font-size: var(--step-mark);
+  line-height: 0.82;
+  letter-spacing: -0.055em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.muted {
+  color: var(--muted);
+}
+.name {
+  font-weight: 500;
+}
+
+/* Links and the one button shape: square, flat, olive. Feedback lands on press, not release. */
+.link {
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.22em;
+  transition: text-underline-offset var(--t-hover) var(--ease-out);
+}
+.link:hover {
+  text-underline-offset: 0.34em;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 0 28px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 500;
+  font-size: var(--step-body);
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition:
+    transform var(--t-press) var(--ease-out),
+    background-color var(--t-hover) ease;
+}
+.btn:hover {
+  background: #3a4630;
+}
+.btn:active,
+.press:active {
+  transform: scale(0.97);
+}
+.press {
+  transition: transform var(--t-press) var(--ease-out);
+}
+
+/* The range pole: a surveyor's striped rod, the one ornament. */
+.pole {
+  display: flex;
+  height: 56px;
+}
+.pole span {
+  flex: 0 0 28px;
+  height: 100%;
+}
+.pole span:nth-child(odd) {
+  background: var(--ink);
+}
+@media (max-width: 767px) {
+  .pole {
+    height: 40px;
+  }
+}
+}
+
+/* Reveal: hidden only when JS is running, so content never depends on a script. */
+html.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity var(--t-reveal) var(--ease-out),
+    transform var(--t-reveal) var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 75ms);
+}
+html.js [data-reveal].in {
+  opacity: 1;
+  transform: none;
+}
+
+/* The stage's slow drift, the one moving picture. */
+@keyframes drift {
+  from {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.12) translate3d(-1.5%, -1%, 0);
+  }
+}
+.drift {
+  animation: drift 28s var(--ease-soft) infinite alternate;
+}
+
+/* Waiting on a source: the line breathes, nothing pretends to be data. */
+@keyframes breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+.reading {
+  animation: breathe 1.6s ease-in-out infinite;
+}
+
+/* Landing page: gentle snapping so chapters land instead of flying past. */
+html:has(.snap-page) {
+  scroll-snap-type: y proximity;
+  overscroll-behavior-y: none;
+}
+.snap-start {
+  scroll-snap-align: start;
+}
+.snap-end {
+  scroll-snap-align: end;
+}
+
+/* Streaming caret. */
+.caret {
+  display: inline-block;
+  width: 0.08em;
+  height: 0.9em;
+  margin-left: 0.06em;
+  vertical-align: -0.08em;
+  background: currentColor;
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Headline words rise out of a mask, one after another (the signature moment on load). */
+.rise {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.rise > span {
+  display: inline-block;
+}
+html.js .rise > span {
+  animation: rise 900ms var(--ease-out) both;
+  animation-delay: calc(120ms + var(--w, 0) * 70ms);
+}
+@keyframes rise {
+  from {
+    transform: translateY(105%);
+  }
+}
+
+/* The auto-advance timer under the active status tab. */
+.tab-timer {
+  transform: scaleX(0);
+  animation: tab-timer 5500ms linear forwards;
+}
+@keyframes tab-timer {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* A tool name runs in from below as its step arrives. */
+.tool-in {
+  animation: tool-in 700ms var(--ease-out) both;
+}
+@keyframes tool-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .rise > span,
+  .tool-in,
+  .tab-timer,
+  .caret {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js [data-reveal] {
+    transform: none;
+    transition: opacity 200ms ease;
+  }
+  .drift,
+  .reading {
+    animation: none;
+  }
+  .btn:active,
+  .press:active {
+    transform: none;
+  }
+}
