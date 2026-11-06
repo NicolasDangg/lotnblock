@@ -80,6 +80,14 @@ textarea {
   font-weight: 400;
   text-wrap: balance;
 }
+.t-section {
+  /* Landing sections: a step under the hero headline, so the page reads as one page, not slides. */
+  font-size: clamp(1.875rem, 1.35rem + 1.5vw, 2.625rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  font-weight: 450;
+  text-wrap: balance;
+}
 .t-lead {
   font-size: var(--step-lead);
   line-height: 1.25;
@@ -105,7 +113,7 @@ textarea {
   font-weight: 500;
 }
 
-/* Links and the one button shape: square, flat, olive. Feedback lands on press, not release. */
+/* Links and the one button shape: a flat olive pill. Feedback lands on press, not release. */
 .link {
   font-weight: 500;
   text-decoration: underline;
@@ -122,6 +130,7 @@ textarea {
   justify-content: center;
   min-height: 56px;
   padding: 0 28px;
+  border-radius: 999px;
   background: var(--accent);
   color: var(--accent-ink);
   font-weight: 500;
@@ -203,6 +212,14 @@ html.js [data-reveal].in {
   animation: breathe 1.6s ease-in-out infinite;
 }
 
+/* A sideways row that scrolls by swipe or its own buttons, without a scrollbar strip under it. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Landing page: gentle snapping so chapters land instead of flying past. */
 html:has(.snap-page) {
   scroll-snap-type: y proximity;
@@ -213,24 +230,6 @@ html:has(.snap-page) {
 }
 .snap-end {
   scroll-snap-align: end;
-}
-
-/* The records ribbon: runs only on screen, pauses under the pointer. */
-.marquee-track {
-  animation: marquee 60s linear infinite;
-  animation-play-state: paused;
-}
-.marquee[data-running] .marquee-track {
-  animation-play-state: running;
-}
-.marquee:hover .marquee-track,
-.marquee:focus-within .marquee-track {
-  animation-play-state: paused;
-}
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
-  }
 }
 
 /* The one live tool breathes. */
@@ -304,7 +303,6 @@ html.js .rise > span {
 
 @media (prefers-reduced-motion: reduce) {
   html.js .rise > span,
-  .marquee-track,
   .live-dot,
   .tool-in,
   .tab-timer,

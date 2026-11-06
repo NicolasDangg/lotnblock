@@ -13,6 +13,7 @@ import { AssessorSection, ASSESSOR_PARTS } from "./AssessorSection";
 import { CitySection } from "./CitySection";
 import { Glance } from "./Glance";
 import { FloodSection, SchoolsSection, TaxSection } from "./MoreSections";
+import { Notice, StatusBadge } from "./Receipt";
 import { WatchPanel } from "./WatchPanel";
 import type { DistrictsRecord } from "@/lib/sources/districts";
 import type { FloodRecord } from "@/lib/sources/flood";
@@ -156,10 +157,11 @@ export function Report({ q }: { q: string }) {
 
         <div className="mx-auto max-w-[1240px] px-[var(--pad)]">
           {s.error ? (
-            <div className="my-16 max-w-[60ch] bg-[var(--field-blush)] px-6 py-6" data-reveal>
-              <h1 className="t-lead name">We couldn&apos;t find that property</h1>
-              <p className="mt-2">{s.error}</p>
-              <p className="mt-2">Try a full street address in King County, or a 10-digit parcel number.</p>
+            <div className="my-16 max-w-[60ch]" data-reveal>
+              <h1 className="t-lead name mb-4">We couldn&apos;t find that property</h1>
+              <Notice tone="source_error" title={s.error}>
+                Try a full street address in King County, or a 10-digit parcel number.
+              </Notice>
             </div>
           ) : (
             <>
@@ -313,9 +315,6 @@ const STATE_TEXT = {
 function SourceState({ connected, section }: { connected: boolean; section?: Section<unknown> }) {
   if (!connected) return <span className="t-small shrink-0 text-[var(--muted)]">Planned</span>;
   if (!section) return <span className="t-small reading shrink-0">Checking…</span>;
-  return (
-    <span className={`t-small name shrink-0 ${section.status === "source_error" ? "bg-[var(--field-blush)] px-2" : ""}`}>
-      {STATE_TEXT[section.status]}
-    </span>
-  );
+  if (section.status === "pending") return <span className="t-small reading shrink-0">{STATE_TEXT.pending}</span>;
+  return <StatusBadge tone={section.status}>{STATE_TEXT[section.status]}</StatusBadge>;
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Alert, Monitor } from "@/lib/monitor";
+import { Notice } from "./Receipt";
 
 interface WatchState {
   watching: boolean;
@@ -73,7 +74,13 @@ export function WatchPanel({ pin, q }: { pin: string; q: string }) {
         )}
       </div>
 
-      {error ? <p className="mt-4 bg-[var(--field-blush)] px-4 py-3">Couldn&apos;t do that: {error}.</p> : null}
+      {error ? (
+        <div className="mt-4">
+          <Notice tone="source_error" title="That didn't go through.">
+            {error}.
+          </Notice>
+        </div>
+      ) : null}
 
       {state?.watching && state.alerts.length ? (
         <ol className="mt-6 flex flex-col gap-4">

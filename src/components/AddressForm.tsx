@@ -17,7 +17,7 @@ export function AddressForm({
 
   if (variant === "hero") {
     return (
-      <form action="/report" method="get" className="flex w-full flex-col gap-2 bg-white p-2 sm:flex-row">
+      <form action="/report" method="get" className="flex w-full flex-col gap-2 rounded-[32px] bg-white p-2 sm:flex-row sm:rounded-full">
         {label}
         <input
           id={id}
@@ -26,7 +26,7 @@ export function AddressForm({
           defaultValue={defaultValue}
           autoComplete="street-address"
           placeholder="Address or parcel number"
-          className="min-h-16 min-w-0 flex-1 bg-white px-4 text-[length:var(--step-lead)] text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none"
+          className="min-h-16 min-w-0 flex-1 rounded-full bg-white px-5 text-[length:var(--step-lead)] text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none"
         />
         <button type="submit" className="btn min-h-16 shrink-0 px-8">
           Look up
@@ -46,7 +46,7 @@ export function AddressForm({
         defaultValue={defaultValue}
         autoComplete="street-address"
         placeholder="1600 E Olive Way, Seattle"
-        className="min-h-14 min-w-0 flex-1 bg-[var(--field-input)] px-4 text-[length:var(--step-body)] text-[var(--ink)] placeholder:text-[var(--muted)] focus:bg-white focus:outline-none"
+        className="min-h-14 min-w-0 flex-1 rounded-full bg-[var(--field-input)] px-5 text-[length:var(--step-body)] text-[var(--ink)] placeholder:text-[var(--muted)] focus:bg-white focus:outline-none"
       />
       <button type="submit" className="btn shrink-0">
         Look up

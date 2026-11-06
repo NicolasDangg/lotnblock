@@ -38,7 +38,7 @@ export function ToolsGrid({ tools }: { tools: ToolStep[] }) {
               {t.state === "live" ? "Working now" : "Not built yet"}
             </p>
           </div>
-          <div className="min-w-0 bg-[#2a2a28] p-6 md:p-8" data-ui data-reveal style={{ ["--i" as string]: 1 }}>
+          <div className="min-w-0 rounded-[20px] bg-[#2a2a28] p-6 md:p-8" data-ui data-reveal style={{ ["--i" as string]: 1 }}>
             <pre className="overflow-x-auto text-[length:var(--step-small)] leading-relaxed text-[var(--paper)] [overflow-wrap:anywhere] whitespace-pre-wrap">
               <code>{t.code}</code>
             </pre>

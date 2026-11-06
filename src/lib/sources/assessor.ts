@@ -44,6 +44,19 @@ export interface Appeal {
   status: string;
 }
 
+/** The assessor's main house record (residential parcels only; commercial ones have none). */
+export interface Building {
+  yearBuilt: number | null;
+  yearRenovated: number | null;
+  stories: number | null;
+  bedrooms: number | null;
+  /** Full baths count 1, three-quarter baths 0.75, half baths 0.5, as the assessor tallies them. */
+  baths: number | null;
+  /** Total finished area, basement included. */
+  livingSqFt: number | null;
+  condition: string;
+}
+
 export interface AssessorRecord {
   parcel: string;
   owner: string;
@@ -57,6 +70,7 @@ export interface AssessorRecord {
   acres: number | null;
   /** Assessor flags that matter before buying: easements, historic designation, water problems… */
   flags: Record<string, string>;
+  building: Building | null;
   assessedValues: AssessedValue[];
   sales: Sale[];
   appeals: Appeal[];
@@ -77,6 +91,7 @@ const TABLES = [
   "cphContent_DetailsViewParcel2",
   "cphContent_DetailsViewLand",
   "cphContent_DetailsViewLandSystem",
+  "cphContent_DetailsViewResBldg",
   ...FLAG_TABLES,
   "cphContent_GridViewTaxRoll",
   "cphContent_GridViewSales",
@@ -100,6 +115,24 @@ export function parseAssessor(html: string): AssessorRecord | null {
     }
   }
 
+  const bldg = labelValues(tableById(html, "cphContent_DetailsViewResBldg") ?? "");
+  const num = (v?: string) => {
+    const n = money(v);
+    return n ? n : null; // the assessor writes 0 for "none" (e.g. never renovated)
+  };
+  const baths = (num(bldg["Full Baths"]) ?? 0) + 0.75 * (num(bldg["3/4 Baths"]) ?? 0) + 0.5 * (num(bldg["1/2 Baths"]) ?? 0);
+  const building: Building | null = Object.keys(bldg).length
+    ? {
+        yearBuilt: num(bldg["Year Built"]),
+        yearRenovated: num(bldg["Year Renovated"]),
+        stories: num(bldg["Stories"]),
+        bedrooms: num(bldg["Bedrooms"]),
+        baths: baths || null,
+        livingSqFt: num(bldg["Total Finished Area"]),
+        condition: bldg["Condition"] ?? "",
+      }
+    : null;
+
   const rows = (id: string) => tableRows(tableById(html, id) ?? "");
 
   return {
@@ -114,6 +147,7 @@ export function parseAssessor(html: string): AssessorRecord | null {
     landSqFt: money(land["Land SqFt"]),
     acres: money(land["Acres"]),
     flags,
+    building,
     // Account, Valued Year, Tax Year, Omit Year, Levy Code, Appraised Land, Appraised Imps,
     // Appraised Total, New Dollars, Taxable Land, Taxable Imps, Taxable Total, Tax Value Reason
     assessedValues: rows("cphContent_GridViewTaxRoll").map((c) => ({

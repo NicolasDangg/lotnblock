@@ -1,14 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AddressForm } from "@/components/AddressForm";
+import { HeroSearch } from "@/components/landing/HeroSearch";
 import { ElasticFooter } from "@/components/landing/ElasticFooter";
-import { ParcelStory } from "@/components/landing/ParcelStory";
-import { RecordMarquee } from "@/components/landing/RecordMarquee";
+import { LotsSection } from "@/components/landing/LotRow";
 import { ToolsGrid } from "@/components/landing/ToolsGrid";
-import { ValueBars } from "@/components/landing/ValueBars";
-import { CountUp } from "@/components/motion/CountUp";
-import { money, time } from "@/components/report/format";
-import { Gap, Receipt } from "@/components/report/Receipt";
+import { Gap, Notice, Receipt } from "@/components/report/Receipt";
 import { SiteFooter } from "@/components/SiteFooter";
 import { StatusTabs, type StatusExample } from "@/components/StatusTabs";
 import { ARCHIVE } from "@/lib/archive";
@@ -54,29 +51,6 @@ function Rise({ text }: { text: string }) {
 
 export default async function Home() {
   const ex = await getExample();
-  const a = ex.assessor?.status === "found" ? ex.assessor.data : null;
-  const latest = a?.assessedValues.find((v) => v.totalValue);
-  const connected = SOURCES.filter((s) => s.run).length;
-  // Oldest first, skipping the years the assessor lists without a value.
-  const history = (a?.assessedValues ?? [])
-    .filter((v) => v.totalValue)
-    .map((v) => ({ year: v.taxYear, total: v.totalValue! }))
-    .reverse();
-
-  // The ribbon: real lines from the example lookup, nothing else.
-  const ribbon = a
-    ? [
-        `${EXAMPLE_ADDRESS}`,
-        `Parcel ${a.parcel}`,
-        `Zoning ${a.zoning}`,
-        latest?.totalValue ? `Assessed ${money(latest.totalValue)} for ${latest.taxYear}` : null,
-        `${a.presentUse}`,
-        a.landSqFt ? `${a.landSqFt.toLocaleString("en-US")} sq ft lot` : null,
-        ...a.permits.slice(0, 4).map((p) => `Permit ${p.number} issued ${p.issued}`),
-        ...a.sales.slice(0, 2).map((s) => `${s.instrument} recorded ${s.date}`),
-        `Fetched with TinyFish at ${time(ex.assessor!.retrievedAt)}`,
-      ].filter((x): x is string => Boolean(x))
-    : [];
 
   return (
     <>
@@ -88,20 +62,17 @@ export default async function Home() {
               Lot &amp; Block
             </Link>
             <nav className="flex items-center gap-x-7" aria-label="Main">
-              <a className="hidden hover:underline md:inline" href="#checks">
-                Sources
+              <a className="hover:underline" href="#lots">
+                Lots
               </a>
-              <a className="hidden hover:underline md:inline" href="#sample">
-                Example
-              </a>
-              <a className="hover:underline" href="#how">
-                How it works
+              <a className="hidden hover:underline md:inline" href="#questions">
+                What it answers
               </a>
               <a className="hidden hover:underline md:inline" href="#tinyfish">
                 TinyFish
               </a>
-              <a className="hidden hover:underline md:inline" href="#who">
-                Who it&apos;s for
+              <a className="hidden hover:underline md:inline" href="#gaps">
+                Gaps
               </a>
             </nav>
           </div>
@@ -109,7 +80,7 @@ export default async function Home() {
 
         {/* Hero: one photograph, the headline and the search bar centred on it */}
         <section
-          className="relative mx-[var(--gap)] flex min-h-[560px] items-center justify-center overflow-hidden md:h-[80svh]"
+          className="relative mx-[var(--gap)] flex min-h-[600px] items-center justify-center overflow-hidden rounded-[28px] md:h-[80svh]"
           aria-labelledby="hero-title"
         >
           <Image
@@ -138,140 +109,72 @@ export default async function Home() {
               each one to the page it came from.
             </p>
             <div className="mx-auto mt-10 max-w-[760px] text-left" data-reveal style={{ ["--i" as string]: 4 }}>
-              <AddressForm variant="hero" id="q-hero" />
+              <HeroSearch />
             </div>
-            <p className="mt-5" data-reveal style={{ ["--i" as string]: 5 }}>
-              Try{" "}
-              <Link className="link" href={exampleHref}>
-                {EXAMPLE_ADDRESS}
-              </Link>{" "}
-              or parcel{" "}
-              <Link className="link" href="/report?q=198520-0495">
-                198520-0495
-              </Link>
-            </p>
           </div>
         </section>
 
-        {/* The records ribbon */}
-        {ribbon.length ? (
-          <div className="mt-[var(--gap)]">
-            <RecordMarquee items={ribbon} label={`Records fetched for ${EXAMPLE_ADDRESS}`} />
-          </div>
-        ) : null}
+        {/* Real lots, read from the county: the first thing under the search */}
+        <LotsSection />
 
-        {/* What a dossier checks */}
-        <Band id="checks" ground="bg-[var(--paper)]" labelledBy="checks-title">
-          <div className="grid gap-x-[var(--pad)] gap-y-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-end">
-            <h2 id="checks-title" className="t-head max-w-[15ch]" data-reveal>
-              Where records come from
-            </h2>
-            <p className="max-w-[52ch]" data-reveal style={{ ["--i" as string]: 1 }}>
-              Every record comes from a city, county or federal website, read live when you search. Nothing comes
-              from listing sites or estimates. {connected === SOURCES.length ? `All ${connected}` : `${connected} of ${SOURCES.length}`}{" "}
-              sources are working; when one can&apos;t be read, the report says so instead of guessing.
-            </p>
-          </div>
-          <div className="mt-12" data-reveal style={{ ["--i" as string]: 2 }}>
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-[var(--muted)]">
-                  <th className="pb-3 pl-4 font-normal">Source</th>
-                  <th className="hidden pb-3 font-normal md:table-cell">Level</th>
-                  <th className="hidden pb-3 font-normal md:table-cell">What you get</th>
-                  <th className="pr-4 pb-3 text-right font-normal">Read with</th>
-                </tr>
-              </thead>
-              <tbody>
-                {SOURCES.map((s) => (
-                  <tr key={s.key} className="odd:bg-[var(--field-input)]">
-                    <td className="name py-4 pr-6 pl-4">{s.name}</td>
-                    <td className="hidden py-4 pr-6 capitalize md:table-cell">{s.level}</td>
-                    <td className="hidden py-4 pr-6 md:table-cell">{s.provides}</td>
-                    <td className={`py-4 pr-4 text-right whitespace-nowrap ${s.run ? "name" : "text-[var(--muted)]"}`}>
-                      {s.run ? VIA_LABEL[s.via] : "Planned"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Band>
-
-        {/* A real sample dossier */}
-        <Band id="sample" ground="bg-[var(--field-blush)]" labelledBy="sample-title">
-          <div className="grid gap-x-[var(--pad)] gap-y-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-end">
-            <h2 id="sample-title" className="t-head max-w-[16ch]" data-reveal>
-              Example: <span className="whitespace-nowrap">{EXAMPLE_ADDRESS.replace(", Seattle", "")}</span>
-            </h2>
-            <p className="max-w-[52ch]" data-reveal style={{ ["--i" as string]: 1 }}>
-              {ex.assessor
-                ? `A real lookup, fetched from the King County Assessor's website at ${time(ex.assessor.retrievedAt)}. Searching an address gives you the same report.`
-                : "The King County Assessor's website didn't respond, so there's no example to show right now."}
-            </p>
-          </div>
-          {a && latest?.totalValue ? (
-            <div className="mt-12 grid gap-x-[var(--pad)] gap-y-12 bg-[var(--paper)] p-[var(--pad)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)]">
-              <div className="flex flex-col justify-between gap-12">
-                <div data-reveal>
-                  <p className="t-mark text-[clamp(3rem,6.5vw,6rem)]">
-                    <CountUp value={latest.totalValue} prefix="$" />
-                  </p>
-                  <p className="t-lead mt-4">
-                    Assessed value for tax year {latest.taxYear}, land and buildings. Zoned {a.zoning}.
-                  </p>
-                </div>
-                <div className="grid max-w-[560px] grid-cols-3 gap-6" data-reveal style={{ ["--i" as string]: 1 }}>
-                  <Figure n={history.length} label="years with an assessed value" />
-                  <Figure n={a.sales.length} label="sales and transfers" />
-                  <Figure n={a.permits.length} label="permits on file" />
-                </div>
-                <div className="flex flex-wrap gap-[var(--gap)]" data-reveal style={{ ["--i" as string]: 2 }}>
-                  <Link href={exampleHref} className="btn">
-                    See the full report
-                  </Link>
-                  <a href={jsonHref} className="btn bg-[var(--paper-2)] text-[var(--ink)] hover:bg-[var(--surface)]">
-                    View as JSON
-                  </a>
-                </div>
-              </div>
-              <div className="flex flex-col gap-12">
-                {history.length > 1 ? (
-                  <div data-reveal style={{ ["--i" as string]: 1 }}>
-                    <ValueBars values={history} />
-                  </div>
-                ) : null}
-                {a.permits.length ? (
-                  <div data-reveal style={{ ["--i" as string]: 2 }}>
-                    <h3 className="t-lead">Most recent permits</h3>
-                    <ol className="mt-4 flex flex-col gap-3">
-                      {a.permits.slice(0, 3).map((p) => (
-                        <li key={p.number} className="bg-[var(--field-input)] px-5 py-4">
-                          <p className="name">
-                            {p.issued} · {p.number}
-                          </p>
-                          <p className="mt-1">{p.description || "No description given."}</p>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                ) : null}
+        {/* What a report answers: one question per official source */}
+        <Band id="questions" ground="bg-[var(--field-blush)]" labelledBy="questions-title">
+          <div className="grid gap-x-[var(--pad)] gap-y-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+            <div className="lg:sticky lg:top-28 lg:self-start">
+              <h2 id="questions-title" className="t-section max-w-[13ch]" data-reveal>
+                What a report answers
+              </h2>
+              <p className="mt-6 max-w-[42ch]" data-reveal style={{ ["--i" as string]: 1 }}>
+                Each answer comes from the government office that keeps the record, read live when you search, and links
+                to the page it came from. Open a question to see where it&apos;s read from.
+              </p>
+              <div className="mt-10 flex flex-wrap gap-[var(--gap)]" data-reveal style={{ ["--i" as string]: 2 }}>
+                <Link href={exampleHref} className="btn">
+                  See an example report
+                </Link>
+                <a href={jsonHref} className="btn bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--field-input)]">
+                  View as JSON
+                </a>
               </div>
             </div>
-          ) : (
-            <p className="t-lead mt-12">The assessor didn&apos;t return any values for this example.</p>
-          )}
-        </Band>
-
-        {/* How it works: address → parcel */}
-        <Band id="how" ground="bg-[var(--field-slate)]" label="How it works">
-          <ParcelStory input={ex.input} property={ex.property} plat={ex.plat} />
+            <ol className="flex flex-col gap-2">
+              {SOURCES.map((s, i) => (
+                <li key={s.key} data-reveal style={{ ["--i" as string]: i + 1 }}>
+                  <details className="group rounded-[20px] bg-[var(--paper)] transition-colors duration-[var(--t-hover)] open:bg-[var(--field-input)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-4 px-[clamp(18px,2.5vw,28px)] py-5 [&::-webkit-details-marker]:hidden">
+                      <span className="min-w-0 flex-1">
+                        <span className="t-lead name block">{QUESTION[s.key] ?? s.name}</span>
+                        <span className="t-small mt-1 block text-[var(--muted)]">{s.name}</span>
+                      </span>
+                      <span
+                        aria-hidden
+                        className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--paper-2)] transition-transform duration-300 ease-[var(--ease-out)] group-open:rotate-45"
+                      >
+                        <svg viewBox="0 0 24 24" className="size-4">
+                          <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                      </span>
+                    </summary>
+                    <div className="px-[clamp(18px,2.5vw,28px)] pb-6">
+                      <p className="max-w-[56ch]">{s.provides}.</p>
+                      <p className="t-small mt-4 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-[var(--paper)] px-3 py-1 capitalize">{s.level} record</span>
+                        <span className="rounded-full bg-[var(--paper)] px-3 py-1">
+                          {s.run ? `Read with ${VIA_LABEL[s.via]}` : "Planned"}
+                        </span>
+                      </p>
+                    </div>
+                  </details>
+                </li>
+              ))}
+            </ol>
+          </div>
         </Band>
 
         {/* TinyFish: four standalone parts */}
         <Band id="tinyfish" ground="bg-[var(--ink)] text-[var(--paper)]" labelledBy="tinyfish-title">
           <div className="grid gap-x-[var(--pad)] gap-y-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-end">
-            <h2 id="tinyfish-title" className="t-head max-w-[16ch]" data-reveal>
+            <h2 id="tinyfish-title" className="t-section max-w-[16ch]" data-reveal>
               How TinyFish works
             </h2>
             <p className="max-w-[52ch] text-[var(--field-sage)]" data-reveal style={{ ["--i" as string]: 1 }}>
@@ -288,8 +191,8 @@ export default async function Home() {
         <Band id="gaps" ground="bg-[var(--field-sage)]" labelledBy="gaps-title">
           <div className="grid gap-x-[var(--pad)] gap-y-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             <div>
-              <h2 id="gaps-title" className="t-head max-w-[14ch]" data-reveal>
-                When a record is missing
+              <h2 id="gaps-title" className="t-section max-w-[14ch]" data-reveal>
+                Gaps are flagged, never guessed
               </h2>
               <p className="mt-6 max-w-[40ch]" data-reveal style={{ ["--i" as string]: 1 }}>
                 Every source in a report is marked with one of four results, so you can tell what was checked and what wasn&apos;t.
@@ -301,34 +204,10 @@ export default async function Home() {
           </div>
         </Band>
 
-        {/* Who it's for */}
-        <Band id="who" ground="bg-[var(--paper)]" labelledBy="who-title">
-          <h2 id="who-title" className="t-head max-w-[14ch]" data-reveal>
-            Who it&apos;s for
-          </h2>
-          <div className="mt-12 grid gap-x-[var(--gap)] gap-y-12 md:grid-cols-3">
-            {AUDIENCES.map((who, i) => (
-              <article key={who.name} className="group" data-reveal style={{ ["--i" as string]: i + 1 }}>
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <Image
-                    src={who.photo.src}
-                    alt={who.alt}
-                    fill
-                    sizes="(max-width: 767px) 100vw, 33vw"
-                    className="object-cover transition-transform duration-700 ease-[var(--ease-out)] group-hover:scale-[1.04]"
-                  />
-                </div>
-                <h3 className="t-lead name mt-5">{who.name}</h3>
-                <p className="mt-2 max-w-[40ch]">{who.text}</p>
-              </article>
-            ))}
-          </div>
-        </Band>
-
         {/* Close: the search again, on olive */}
         <Band ground="bg-[var(--accent)] text-[var(--accent-ink)]" labelledBy="end-title">
           <div className="text-center">
-            <h2 id="end-title" className="t-head mx-auto max-w-[16ch]" data-reveal>
+            <h2 id="end-title" className="t-section mx-auto max-w-[16ch]" data-reveal>
               Search a King County address
             </h2>
             <div className="mx-auto mt-10 max-w-[760px] text-left" data-reveal style={{ ["--i" as string]: 1 }}>
@@ -345,37 +224,16 @@ export default async function Home() {
   );
 }
 
-const AUDIENCES = [
-  {
-    name: "Buyers",
-    text: "Check the assessed value, past sales and any issues the assessor has noted on the property.",
-    photo: ARCHIVE["fremont-olympics-2015"],
-    alt: "A residential street in Fremont, Seattle, with the Olympic Mountains behind",
-  },
-  {
-    name: "Agents",
-    text: "Get zoning, lot size and permit history in one report, with links your clients can open.",
-    photo: ARCHIVE["highland-drive-2007"],
-    alt: "A white colonial-revival house behind clipped hedges on West Highland Drive, Seattle",
-  },
-  {
-    name: "Contractors",
-    text: "See the zoning and the permits already filed, so you know what work has been done.",
-    photo: ARCHIVE["summit-ave-bungalows-1979"],
-    alt: "A row of small grey bungalows on Summit Avenue East, Seattle, photographed in 1979",
-  },
-];
-
-function Figure({ n, label }: { n: number; label: string }) {
-  return (
-    <div>
-      <p className="t-head">
-        <CountUp value={n} />
-      </p>
-      <p className="mt-1 text-[var(--muted)]">{label}</p>
-    </div>
-  );
-}
+/** The buyer's question each source answers, in the order the sources are listed. */
+const QUESTION: Record<string, string> = {
+  assessor: "What is it worth, and when did it last sell?",
+  districts: "Is the land in a hazard area?",
+  flood: "Will a lender require flood insurance?",
+  schools: "Which public schools are close by?",
+  treasurer: "Are the property taxes paid?",
+  permits: "What work has the city permitted?",
+  violations: "Has anyone filed a code complaint?",
+};
 
 /**
  * One report fragment per answer. "Found" and "Nothing on record" come from the real example
@@ -404,14 +262,15 @@ function statusExamples(ex: Example): StatusExample[] {
       fragment:
         a && s ? (
           <>
-            <p className="name">Zoning {a.zoning}</p>
-            <p>
-              {a.presentUse}, {a.landSqFt?.toLocaleString("en-US")} sq ft
-            </p>
+            <Notice tone="found" title={`Zoning ${a.zoning}`}>
+              {a.presentUse}, {a.landSqFt?.toLocaleString("en-US")} sq ft lot
+            </Notice>
             <Receipt section={s} />
           </>
         ) : (
-          <p>Records are listed here, each with a link to its source page.</p>
+          <Notice tone="found" title="Records are listed here">
+            Each one links to the page it came from.
+          </Notice>
         ),
     },
     {

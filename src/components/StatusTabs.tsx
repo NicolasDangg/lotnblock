@@ -40,7 +40,7 @@ export function StatusTabs({ examples }: { examples: StatusExample[] }) {
 
   return (
     <div ref={root}>
-      <div role="tablist" aria-label="What a source can answer" className="flex flex-wrap gap-x-6 gap-y-2">
+      <div role="tablist" aria-label="What a source can answer" className="flex w-fit max-w-full flex-wrap gap-1 rounded-[24px] bg-[var(--ink)]/[0.07] p-1">
         {examples.map((s, i) => (
           <button
             key={s.label}
@@ -49,28 +49,24 @@ export function StatusTabs({ examples }: { examples: StatusExample[] }) {
             aria-controls="status-panel"
             onPointerDown={() => pick(i)}
             onClick={() => pick(i)}
-            className={`press relative py-1 text-left text-[length:var(--step-body)] ${
-              i === active ? "name text-[var(--ink)]" : "text-[var(--muted)]"
+            className={`press relative overflow-hidden rounded-full px-4 py-2 text-left transition-colors duration-[var(--t-hover)] ${
+              i === active ? "name bg-[var(--paper)] text-[var(--ink)]" : "text-[var(--muted)] hover:bg-[var(--paper)]/50"
             }`}
           >
             {s.label}
-            {/* The underline fills while a tab waits its turn, so the auto-advance is visible. */}
-            <span aria-hidden className="absolute inset-x-0 -bottom-0.5 h-0.5 overflow-hidden">
-              <span
-                key={`${active}-${held}`}
-                className={`block h-full origin-left bg-[var(--ink)] ${i === active && !held ? "tab-timer" : ""}`}
-                style={{ transform: i !== active ? "scaleX(0)" : held ? "none" : undefined }}
-              />
-            </span>
+            {/* A thin bar fills inside the active pill while it waits its turn, so the auto-advance is visible. */}
+            {i === active && !held ? (
+              <span aria-hidden className="absolute inset-x-4 bottom-1 h-0.5 overflow-hidden rounded-full bg-[var(--ink)]/10">
+                <span key={active} className="tab-timer block h-full origin-left bg-[var(--ink)]/50" />
+              </span>
+            ) : null}
           </button>
         ))}
       </div>
-      <div id="status-panel" role="tabpanel" key={active} className="tool-in mt-10">
-        <p className="max-w-[40ch] text-[var(--ink)]">{ex.text}</p>
-        <p className="t-small mt-8 text-[var(--muted)]">In a report · {ex.provenance}</p>
-        <div className="mt-3 max-w-[560px] bg-[var(--field-input)] p-6" data-ui>
-          {ex.fragment}
-        </div>
+      <div id="status-panel" role="tabpanel" key={active} className="tool-in mt-8 max-w-[560px]">
+        <p className="text-[var(--ink)]">{ex.text}</p>
+        <p className="t-small mt-8 mb-3 text-[var(--muted)]">In a report · {ex.provenance}</p>
+        <div data-ui>{ex.fragment}</div>
       </div>
     </div>
   );
