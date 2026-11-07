@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { AddressForm } from "@/components/AddressForm";
-import { HeroSearch } from "@/components/landing/HeroSearch";
+import { ClosingPanel } from "@/components/landing/ClosingPanel";
 import { ElasticFooter } from "@/components/landing/ElasticFooter";
+import { HeroSearch } from "@/components/landing/HeroSearch";
 import { LotsSection } from "@/components/landing/LotRow";
 import { ToolsGrid } from "@/components/landing/ToolsGrid";
 import { Gap, Notice, Receipt } from "@/components/report/Receipt";
@@ -33,7 +33,7 @@ function Band({
 }) {
   return (
     <section id={id} className={`scroll-mt-16 ${ground}`} aria-label={label} aria-labelledby={labelledBy}>
-      <div className="mx-auto max-w-[1240px] px-[var(--pad)] py-[clamp(88px,11vw,168px)]">{children}</div>
+      <div className="mx-auto max-w-[1240px] px-[var(--pad)] py-[clamp(72px,8vw,120px)]">{children}</div>
     </section>
   );
 }
@@ -56,30 +56,34 @@ export default async function Home() {
     <>
       <main className="snap-page relative z-10 bg-[var(--paper)]">
         {/* Header: stays with you, translucent so the page scrolls under it */}
-        <header className="sticky top-0 z-40 bg-[var(--paper)]/80 backdrop-blur-xl backdrop-saturate-150">
-          <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-x-8 px-[var(--pad)] py-4">
+        <header className="sticky top-0 z-40 bg-[var(--paper)]/85 backdrop-blur-xl backdrop-saturate-150">
+          <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-x-8 px-[var(--pad)] py-3">
             <Link href="/" className="t-lead name press">
               Lot &amp; Block
             </Link>
             <nav className="flex items-center gap-x-7" aria-label="Main">
-              <a className="hover:underline" href="#lots">
-                Lots
+              <a className="hidden hover:underline md:inline" href="#lots">
+                Examples
               </a>
               <a className="hidden hover:underline md:inline" href="#questions">
-                What it answers
-              </a>
-              <a className="hidden hover:underline md:inline" href="#tinyfish">
-                TinyFish
+                What you get
               </a>
               <a className="hidden hover:underline md:inline" href="#gaps">
-                Gaps
+                Accuracy
               </a>
+              <a className="hidden hover:underline md:inline" href="#tinyfish">
+                How it works
+              </a>
+              <Link href={exampleHref} className="btn min-h-10 px-5 text-[length:var(--step-small)]">
+                Example report
+              </Link>
             </nav>
           </div>
         </header>
 
         {/* Hero: one photograph, the headline and the search bar centred on it */}
         <section
+          id="top"
           className="relative mx-[var(--gap)] flex min-h-[600px] items-center justify-center overflow-hidden rounded-[28px] md:h-[80svh]"
           aria-labelledby="hero-title"
         >
@@ -118,21 +122,21 @@ export default async function Home() {
         <LotsSection />
 
         {/* What a report answers: one question per official source */}
-        <Band id="questions" ground="bg-[var(--field-blush)]" labelledBy="questions-title">
+        <Band id="questions" ground="bg-[var(--field-input)]" labelledBy="questions-title">
           <div className="grid gap-x-[var(--pad)] gap-y-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             <div className="lg:sticky lg:top-28 lg:self-start">
               <h2 id="questions-title" className="t-section max-w-[13ch]" data-reveal>
                 What a report answers
               </h2>
-              <p className="mt-6 max-w-[42ch]" data-reveal style={{ ["--i" as string]: 1 }}>
+              <p className="mt-6 max-w-[42ch] text-[var(--muted)]" data-reveal style={{ ["--i" as string]: 1 }}>
                 Each answer comes from the government office that keeps the record, read live when you search, and links
                 to the page it came from. Open a question to see where it&apos;s read from.
               </p>
-              <div className="mt-10 flex flex-wrap gap-[var(--gap)]" data-reveal style={{ ["--i" as string]: 2 }}>
+              <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4" data-reveal style={{ ["--i" as string]: 2 }}>
                 <Link href={exampleHref} className="btn">
                   See an example report
                 </Link>
-                <a href={jsonHref} className="btn bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--field-input)]">
+                <a href={jsonHref} className="link">
                   View as JSON
                 </a>
               </div>
@@ -140,7 +144,7 @@ export default async function Home() {
             <ol className="flex flex-col gap-2">
               {SOURCES.map((s, i) => (
                 <li key={s.key} data-reveal style={{ ["--i" as string]: i + 1 }}>
-                  <details className="group rounded-[20px] bg-[var(--paper)] transition-colors duration-[var(--t-hover)] open:bg-[var(--field-input)]">
+                  <details className="group rounded-[20px] bg-white transition-shadow duration-[var(--t-hover)] open:shadow-[0_8px_28px_rgba(28,28,28,0.07)]">
                     <summary className="flex cursor-pointer list-none items-center gap-4 px-[clamp(18px,2.5vw,28px)] py-5 [&::-webkit-details-marker]:hidden">
                       <span className="min-w-0 flex-1">
                         <span className="t-lead name block">{QUESTION[s.key] ?? s.name}</span>
@@ -148,7 +152,7 @@ export default async function Home() {
                       </span>
                       <span
                         aria-hidden
-                        className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--paper-2)] transition-transform duration-300 ease-[var(--ease-out)] group-open:rotate-45"
+                        className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--accent-tint)] text-[var(--accent)] transition-transform duration-300 ease-[var(--ease-out)] group-open:rotate-45"
                       >
                         <svg viewBox="0 0 24 24" className="size-4">
                           <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -158,8 +162,8 @@ export default async function Home() {
                     <div className="px-[clamp(18px,2.5vw,28px)] pb-6">
                       <p className="max-w-[56ch]">{s.provides}.</p>
                       <p className="t-small mt-4 flex flex-wrap gap-2">
-                        <span className="rounded-full bg-[var(--paper)] px-3 py-1 capitalize">{s.level} record</span>
-                        <span className="rounded-full bg-[var(--paper)] px-3 py-1">
+                        <span className="rounded-full bg-[var(--field-input)] px-3 py-1 capitalize">{s.level} record</span>
+                        <span className="rounded-full bg-[var(--field-input)] px-3 py-1">
                           {s.run ? `Read with ${VIA_LABEL[s.via]}` : "Planned"}
                         </span>
                       </p>
@@ -171,30 +175,14 @@ export default async function Home() {
           </div>
         </Band>
 
-        {/* TinyFish: four standalone parts */}
-        <Band id="tinyfish" ground="bg-[var(--ink)] text-[var(--paper)]" labelledBy="tinyfish-title">
-          <div className="grid gap-x-[var(--pad)] gap-y-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-end">
-            <h2 id="tinyfish-title" className="t-section max-w-[16ch]" data-reveal>
-              How TinyFish works
-            </h2>
-            <p className="max-w-[52ch] text-[var(--field-sage)]" data-reveal style={{ ["--i" as string]: 1 }}>
-              Government property sites have no API, so TinyFish opens them the way a person would. Each block below
-              is the request this site sends for the example address.
-            </p>
-          </div>
-          <div className="mt-[clamp(64px,8vw,112px)]">
-            <ToolsGrid tools={toolSteps(ex)} />
-          </div>
-        </Band>
-
-        {/* The four answers */}
-        <Band id="gaps" ground="bg-[var(--field-sage)]" labelledBy="gaps-title">
+        {/* Trust: what happens when a record can't be found */}
+        <Band id="gaps" ground="bg-[var(--paper)]" labelledBy="gaps-title">
           <div className="grid gap-x-[var(--pad)] gap-y-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             <div>
               <h2 id="gaps-title" className="t-section max-w-[14ch]" data-reveal>
                 Gaps are flagged, never guessed
               </h2>
-              <p className="mt-6 max-w-[40ch]" data-reveal style={{ ["--i" as string]: 1 }}>
+              <p className="mt-6 max-w-[40ch] text-[var(--muted)]" data-reveal style={{ ["--i" as string]: 1 }}>
                 Every source in a report is marked with one of four results, so you can tell what was checked and what wasn&apos;t.
               </p>
             </div>
@@ -204,17 +192,24 @@ export default async function Home() {
           </div>
         </Band>
 
-        {/* Close: the search again, on olive */}
-        <Band ground="bg-[var(--accent)] text-[var(--accent-ink)]" labelledBy="end-title">
-          <div className="text-center">
-            <h2 id="end-title" className="t-section mx-auto max-w-[16ch]" data-reveal>
-              Search a King County address
+        {/* For the curious: how the records are read. Last, because a buyer doesn't need it to decide. */}
+        <Band id="tinyfish" ground="bg-[var(--ink)] text-[var(--paper)]" labelledBy="tinyfish-title">
+          <div className="grid gap-x-[var(--pad)] gap-y-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-end">
+            <h2 id="tinyfish-title" className="t-section max-w-[16ch]" data-reveal>
+              How the records are read
             </h2>
-            <div className="mx-auto mt-10 max-w-[760px] text-left" data-reveal style={{ ["--i" as string]: 1 }}>
-              <AddressForm variant="hero" id="q-end" />
-            </div>
+            <p className="max-w-[52ch] text-[#c9c7be]" data-reveal style={{ ["--i" as string]: 1 }}>
+              Government property sites have no API, so TinyFish opens them the way a person would. Each block below
+              is the request this site sends for the example address, with an agent doing the job in person.
+            </p>
+          </div>
+          <div className="mt-[clamp(64px,8vw,112px)]">
+            <ToolsGrid tools={toolSteps(ex)} />
           </div>
         </Band>
+
+        {/* Close: the search once more, beside one real lot */}
+        <ClosingPanel />
       </main>
 
       <ElasticFooter>

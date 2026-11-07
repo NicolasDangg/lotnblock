@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 /*
- * Direction: "The split stage" (tasteskill draw, seed 524085766).
- * Type: Switzer, one roman weight plus 500 for names and links. Colour: slate, sage, blush, olive.
- * Square corners everywhere; one button shape. Motion follows Apple's fluid-interface rules:
- * feedback on press, critically damped (no overshoot), transform and opacity only.
+ * One brand colour: a deep green, used for actions, links in focus and the closing panel.
+ * Everything else is warm neutral (paper, ink, grey), so the green is the one thing that stands out.
+ * Type: Switzer. Motion: feedback on press, critically damped, transform and opacity only.
  */
 :root {
-  --bg: #a6b3bc;
-  --surface: #b2bdc5;
-  --paper: #e3e2da;
-  --paper-2: #d9d8cf;
-  --field-input: #edeeec;
+  --paper: #faf9f6;
+  --paper-2: #ebe9e2;
+  --field-input: #f3f1ec;
   --ink: #1c1c1c;
-  --muted: #38424a;
-  --accent: #2c3620;
-  --accent-ink: #e3e2da;
-  --field-slate: #a6b3bc;
-  --field-sage: #b7c8be;
-  --field-blush: #d6c4b8;
+  --muted: #5b5a55;
+  --accent: #0f6e4e;
+  --accent-hover: #0b5a40;
+  --accent-tint: #e2f0e9;
+  --accent-ink: #ffffff;
+  /* Status tints used inside reports: a green wash for "found", a warm wash for gaps. */
+  --field-slate: #e6e8e8;
+  --field-sage: #e2f0e9;
+  --field-blush: #f1e5da;
 
   --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
   --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
@@ -142,7 +142,7 @@ textarea {
     background-color var(--t-hover) ease;
 }
 .btn:hover {
-  background: #3a4630;
+  background: var(--accent-hover);
 }
 .btn:active,
 .press:active {
@@ -220,11 +220,12 @@ html.js [data-reveal].in {
   display: none;
 }
 
-/* Landing page: gentle snapping so chapters land instead of flying past. */
+/* Landing page: gentle snapping so the curtain footer lands half and fully revealed. */
 html:has(.snap-page) {
   scroll-snap-type: y proximity;
   overscroll-behavior-y: none;
 }
+/* Row snapping for the sideways lots row. */
 .snap-start {
   scroll-snap-align: start;
 }
@@ -279,17 +280,6 @@ html.js .rise > span {
   }
 }
 
-/* The auto-advance timer under the active status tab. */
-.tab-timer {
-  transform: scaleX(0);
-  animation: tab-timer 5500ms linear forwards;
-}
-@keyframes tab-timer {
-  to {
-    transform: scaleX(1);
-  }
-}
-
 /* A tool name runs in from below as its step arrives. */
 .tool-in {
   animation: tool-in 700ms var(--ease-out) both;
@@ -301,11 +291,157 @@ html.js .rise > span {
   }
 }
 
+/* Agent scenes (landing page, "How the records are read"). */
+.scene .sc-chip {
+  animation: sc-chip 3.6s ease-in-out infinite both;
+  opacity: 0;
+}
+@keyframes sc-chip {
+  0% {
+    transform: translate(0, 0) scale(0.8);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  55% {
+    transform: translate(98px, -70px) scale(1);
+  }
+  88% {
+    transform: translate(190px, 18px) scale(0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(190px, 30px) scale(0.6);
+    opacity: 0;
+  }
+}
+.scene .sc-pull {
+  animation: sc-pull 1.8s ease-in-out infinite alternate;
+}
+@keyframes sc-pull {
+  from {
+    transform: rotate(-9deg);
+  }
+  to {
+    transform: rotate(7deg);
+  }
+}
+.scene .sc-scan {
+  animation: sc-scan 3.4s ease-in-out infinite alternate;
+}
+@keyframes sc-scan {
+  from {
+    transform: rotate(-16deg);
+  }
+  to {
+    transform: rotate(22deg);
+  }
+}
+.scene .sc-walk {
+  animation: sc-walk 10s ease-in-out infinite alternate;
+}
+@keyframes sc-walk {
+  to {
+    transform: translateX(250px);
+  }
+}
+.scene .sc-bob {
+  animation: sc-bob 0.5s ease-in-out infinite alternate;
+}
+@keyframes sc-bob {
+  to {
+    transform: translateY(-3px);
+  }
+}
+.scene .sc-glow-a {
+  animation: sc-glow-a 20s ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes sc-glow-a {
+  0%,
+  14%,
+  86%,
+  100% {
+    opacity: 1;
+  }
+  24%,
+  76% {
+    opacity: 0;
+  }
+}
+.scene .sc-glow-b {
+  animation: sc-glow-b 20s ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes sc-glow-b {
+  0%,
+  34%,
+  66%,
+  100% {
+    opacity: 0;
+  }
+  42%,
+  58% {
+    opacity: 1;
+  }
+}
+.scene .sc-type {
+  animation: sc-type 5s steps(14) infinite;
+}
+@keyframes sc-type {
+  0% {
+    transform: scaleX(0);
+  }
+  70%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+.scene .sc-lean {
+  animation: sc-lean 4.5s ease-in-out infinite alternate;
+}
+@keyframes sc-lean {
+  to {
+    transform: translateX(6px);
+  }
+}
+.scene .sc-steam {
+  animation: sc-steam 2.4s ease-out infinite;
+  opacity: 0;
+}
+@keyframes sc-steam {
+  0% {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+.scene .sc-pulse {
+  animation: sc-pulse 1.8s ease-in-out infinite;
+}
+@keyframes sc-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene * {
+    animation: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html.js .rise > span,
   .live-dot,
   .tool-in,
-  .tab-timer,
   .caret {
     animation: none;
   }

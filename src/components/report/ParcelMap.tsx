@@ -93,15 +93,15 @@ export function ParcelMap({ lat, lon, outline, label }: { lat: number; lon: numb
       }
       drawn.push(
         L.polygon(outline.subject, {
-          color: aerial ? "#f2f1eb" : "#2c3620",
+          color: aerial ? "#f2f1eb" : "#0f6e4e",
           weight: 3,
-          fillColor: aerial ? "#f2f1eb" : "#2c3620",
+          fillColor: aerial ? "#f2f1eb" : "#0f6e4e",
           fillOpacity: aerial ? 0.12 : 0.22,
           interactive: false,
         }),
       );
     } else {
-      drawn.push(L.circleMarker([lat, lon], { radius: 9, color: "#e3e2da", weight: 3, fillColor: "#2c3620", fillOpacity: 1 }));
+      drawn.push(L.circleMarker([lat, lon], { radius: 9, color: "#faf9f6", weight: 3, fillColor: "#0f6e4e", fillOpacity: 1 }));
     }
     drawn.forEach((d) => d.addTo(m));
     return () => drawn.forEach((d) => d.remove());
