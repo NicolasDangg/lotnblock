@@ -151,24 +151,6 @@ textarea {
 .press {
   transition: transform var(--t-press) var(--ease-out);
 }
-
-/* The range pole: a surveyor's striped rod, the one ornament. */
-.pole {
-  display: flex;
-  height: 56px;
-}
-.pole span {
-  flex: 0 0 28px;
-  height: 100%;
-}
-.pole span:nth-child(odd) {
-  background: var(--ink);
-}
-@media (max-width: 767px) {
-  .pole {
-    height: 40px;
-  }
-}
 }
 
 /* Reveal: hidden only when JS is running, so content never depends on a script. */
@@ -189,19 +171,6 @@ html.js [data-reveal].in {
   transform: none;
 }
 
-/* The stage's slow drift, the one moving picture. */
-@keyframes drift {
-  from {
-    transform: scale(1.04) translate3d(0, 0, 0);
-  }
-  to {
-    transform: scale(1.12) translate3d(-1.5%, -1%, 0);
-  }
-}
-.drift {
-  animation: drift 28s var(--ease-soft) infinite alternate;
-}
-
 /* Waiting on a source: the line breathes, nothing pretends to be data. */
 @keyframes breathe {
   50% {
@@ -220,29 +189,6 @@ html.js [data-reveal].in {
   display: none;
 }
 
-/* Landing page: gentle snapping so the curtain footer lands half and fully revealed. */
-html:has(.snap-page) {
-  scroll-snap-type: y proximity;
-  overscroll-behavior-y: none;
-}
-/* Row snapping for the sideways lots row. */
-.snap-start {
-  scroll-snap-align: start;
-}
-.snap-end {
-  scroll-snap-align: end;
-}
-
-/* The one live tool breathes. */
-.live-dot {
-  animation: live 2.4s ease-in-out infinite;
-}
-@keyframes live {
-  50% {
-    opacity: 0.35;
-  }
-}
-
 /* Streaming caret. */
 .caret {
   display: inline-block;
@@ -259,192 +205,178 @@ html:has(.snap-page) {
   }
 }
 
-/* Headline words rise out of a mask, one after another (the signature moment on load). */
-.rise {
-  display: inline-block;
+/*
+ * Landing page. A records lookup dressed as a home-listings portal: a white bar, one photograph
+ * with the search on it, rows of homes and photo tiles. One corner radius for pictures and panels
+ * (12px), pills for every control, the brand green on the action only.
+ */
+.home {
+  --r: 12px;
+  --pad: clamp(20px, 4vw, 56px);
+  --band: clamp(64px, 10vw, 152px);
+  --scrim: rgba(18, 20, 19, 0.5);
+  --green-deep: #0b3f2e;
+  --green-soft: #a9d4c1;
+}
+@layer components {
+.d-display {
+  font-size: clamp(2.5rem, 1.2rem + 5.2vw, 5.75rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+}
+.d-title {
+  font-size: clamp(2rem, 1.35rem + 2.4vw, 3.25rem);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.d-strong {
+  font-weight: 600;
+}
+.btn-ink {
+  background: var(--ink);
+}
+.btn-ink:hover {
+  background: #000;
+}
+.btn-paper {
+  background: #fff;
+  color: var(--ink);
+}
+.btn-paper:hover {
+  background: var(--paper-2);
+}
+/* A small white label on a photograph. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  padding: 4px 12px;
+  font-size: var(--step-small);
+  font-weight: 500;
+}
+/* A picture that eases closer when its link is hovered or focused. */
+.zoom img,
+.zoom svg {
+  transition: transform 700ms var(--ease-out);
+}
+a:hover .zoom img,
+a:hover .zoom svg,
+a:focus-visible .zoom img,
+a:focus-visible .zoom svg {
+  transform: scale(1.04);
+}
+/* Text links in the nav: a filled bar grows under the word. */
+.navlink {
+  position: relative;
+  padding: 6px 0;
+  font-weight: 500;
+}
+.navlink::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  border-radius: 3px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 260ms var(--ease-out);
+}
+.navlink:hover::after,
+.navlink:focus-visible::after,
+.navlink[aria-checked="true"]::after {
+  transform: scaleX(1);
+}
+}
+
+/* The hero photograph's slow drift, the one moving picture. */
+@keyframes drift {
+  from {
+    transform: scale(1.03) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.1) translate3d(-1.2%, -1%, 0);
+  }
+}
+.drift {
+  animation: drift 30s var(--ease-soft) infinite alternate;
+}
+
+/* The headline's two lines rise from behind their own baselines (the signature move on load). */
+.line {
+  display: block;
   overflow: hidden;
-  vertical-align: top;
-  padding-bottom: 0.08em;
-  margin-bottom: -0.08em;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
 }
-.rise > span {
-  display: inline-block;
+.line > span {
+  display: block;
 }
-html.js .rise > span {
+html.js .line > span {
   animation: rise 900ms var(--ease-out) both;
-  animation-delay: calc(120ms + var(--w, 0) * 70ms);
+  animation-delay: calc(100ms + var(--l, 0) * 110ms);
 }
 @keyframes rise {
   from {
-    transform: translateY(105%);
+    transform: translateY(108%);
   }
 }
 
-/* A tool name runs in from below as its step arrives. */
-.tool-in {
-  animation: tool-in 700ms var(--ease-out) both;
+/* The official sources, running past on one line. */
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 48s linear infinite;
 }
-@keyframes tool-in {
+.marquee:hover {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* A panel's content arrives when its tab or stage is opened. */
+.arrive {
+  animation: arrive 500ms var(--ease-out) both;
+}
+@keyframes arrive {
   from {
     opacity: 0;
-    transform: translateY(0.35em);
+    transform: translateY(12px);
   }
 }
 
-/* Agent scenes (landing page, "How the records are read"). */
-.scene .sc-chip {
-  animation: sc-chip 3.6s ease-in-out infinite both;
-  opacity: 0;
+/* How the records are read: without script every stage is simply open, one under another. */
+html.js .stage-closed {
+  display: none;
 }
-@keyframes sc-chip {
-  0% {
-    transform: translate(0, 0) scale(0.8);
-    opacity: 0;
-  }
-  12% {
-    opacity: 1;
-  }
-  55% {
-    transform: translate(98px, -70px) scale(1);
-  }
-  88% {
-    transform: translate(190px, 18px) scale(0.9);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(190px, 30px) scale(0.6);
-    opacity: 0;
-  }
+html:not(.js) .stage-toggle {
+  display: none;
 }
-.scene .sc-pull {
-  animation: sc-pull 1.8s ease-in-out infinite alternate;
-}
-@keyframes sc-pull {
-  from {
-    transform: rotate(-9deg);
-  }
-  to {
-    transform: rotate(7deg);
-  }
-}
-.scene .sc-scan {
-  animation: sc-scan 3.4s ease-in-out infinite alternate;
-}
-@keyframes sc-scan {
-  from {
-    transform: rotate(-16deg);
-  }
-  to {
-    transform: rotate(22deg);
-  }
-}
-.scene .sc-walk {
-  animation: sc-walk 10s ease-in-out infinite alternate;
-}
-@keyframes sc-walk {
-  to {
-    transform: translateX(250px);
-  }
-}
-.scene .sc-bob {
-  animation: sc-bob 0.5s ease-in-out infinite alternate;
-}
-@keyframes sc-bob {
-  to {
-    transform: translateY(-3px);
-  }
-}
-.scene .sc-glow-a {
-  animation: sc-glow-a 20s ease-in-out infinite;
-  opacity: 0;
-}
-@keyframes sc-glow-a {
-  0%,
-  14%,
-  86%,
-  100% {
-    opacity: 1;
-  }
-  24%,
-  76% {
-    opacity: 0;
-  }
-}
-.scene .sc-glow-b {
-  animation: sc-glow-b 20s ease-in-out infinite;
-  opacity: 0;
-}
-@keyframes sc-glow-b {
-  0%,
-  34%,
-  66%,
-  100% {
-    opacity: 0;
-  }
-  42%,
-  58% {
-    opacity: 1;
-  }
-}
-.scene .sc-type {
-  animation: sc-type 5s steps(14) infinite;
-}
-@keyframes sc-type {
-  0% {
-    transform: scaleX(0);
-  }
-  70%,
-  100% {
-    transform: scaleX(1);
-  }
-}
-.scene .sc-lean {
-  animation: sc-lean 4.5s ease-in-out infinite alternate;
-}
-@keyframes sc-lean {
-  to {
-    transform: translateX(6px);
-  }
-}
-.scene .sc-steam {
-  animation: sc-steam 2.4s ease-out infinite;
-  opacity: 0;
-}
-@keyframes sc-steam {
-  0% {
-    transform: translateY(6px);
-    opacity: 0;
-  }
-  30% {
-    opacity: 0.7;
-  }
-  100% {
-    transform: translateY(-10px);
-    opacity: 0;
-  }
-}
-.scene .sc-pulse {
-  animation: sc-pulse 1.8s ease-in-out infinite;
-}
-@keyframes sc-pulse {
-  50% {
-    opacity: 0.35;
-  }
+html:not(.js) .stages {
+  flex-direction: column;
+  height: auto;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .scene * {
-    animation: none !important;
-  }
+/* Questions: the mark turns into a cross when the answer is open. */
+.faq summary::-webkit-details-marker {
+  display: none;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  html.js .rise > span,
-  .live-dot,
-  .tool-in,
-  .caret {
-    animation: none;
-  }
+.faq .mark {
+  transition: transform 300ms var(--ease-out);
+}
+.faq[open] .mark {
+  transform: rotate(45deg);
+}
+.faq[open] {
+  background: var(--accent-tint);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -453,9 +385,22 @@ html.js .rise > span {
     filter: none;
     transition: opacity 200ms ease;
   }
+  html.js .line > span,
   .drift,
-  .reading {
+  .reading,
+  .caret,
+  .arrive,
+  .marquee {
     animation: none;
+  }
+  .marquee {
+    flex-wrap: wrap;
+    width: auto;
+  }
+  .zoom img,
+  .zoom svg,
+  .navlink::after {
+    transition: none;
   }
   .btn:active,
   .press:active {

@@ -44,5 +44,50 @@ export const ARCHIVE = {
     "page": "https://commons.wikimedia.org/wiki/File:Seattle_-_22_W_Highland_Drive_01.jpg",
     "width": 1920,
     "height": 1440
+  },
+  "county-courthouse": {
+    "src": "/photos/county-courthouse.jpg",
+    "title": "Seattle - King County Courthouse and King County Administration Building 01",
+    "creator": "Joe Mabel",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/w/index.php?curid=74506051",
+    "width": 1920,
+    "height": 1275
+  },
+  "snoqualmie-river": {
+    "src": "/photos/snoqualmie-river.jpg",
+    "title": "Snoqualmie River",
+    "creator": "MarshyBoardwalk",
+    "license": "CC0",
+    "page": "https://commons.wikimedia.org/w/index.php?curid=185872086",
+    "width": 1920,
+    "height": 1440
+  },
+  "queen-anne-school": {
+    "src": "/photos/queen-anne-school.jpg",
+    "title": "Seattle - West Queen Anne Public School 05",
+    "creator": "Joe Mabel",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/w/index.php?curid=2726184",
+    "width": 1920,
+    "height": 1440
+  },
+  "municipal-tower": {
+    "src": "/photos/municipal-tower.jpg",
+    "title": "Seattle Municipal Tower",
+    "creator": "Benjamin Cody",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/w/index.php?curid=2507054",
+    "width": 1920,
+    "height": 2560
+  },
+  "craftsman-revival-2009": {
+    "src": "/photos/craftsman-revival-2009.jpg",
+    "title": "Seattle - Craftsman revival houses",
+    "creator": "Joe Mabel",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/w/index.php?curid=6808080",
+    "width": 1920,
+    "height": 1440
   }
 } as const;
