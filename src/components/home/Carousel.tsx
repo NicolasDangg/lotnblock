@@ -57,7 +57,7 @@ export function Carousel({
       <ul
         ref={el}
         aria-label={label}
-        className="no-scrollbar mt-10 flex snap-x snap-mandatory scroll-px-[var(--inset)] gap-5 overflow-x-auto overscroll-x-contain px-[var(--inset)]"
+        className="no-scrollbar mt-8 flex snap-x snap-mandatory scroll-px-[var(--inset)] gap-5 overflow-x-auto overflow-y-hidden overscroll-x-contain px-[var(--inset)] py-2"
       >
         {children}
       </ul>
