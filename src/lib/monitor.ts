@@ -7,6 +7,8 @@
  * /api/watch/snapshot instead: a short, stable text of the parcel's official records that is
  * rebuilt live from the King County sites (via TinyFish Fetch) every time it is read. A new permit,
  * a sale, an owner change or a new assessed value changes that text, and the Monitor reports it.
+ * For Seattle lots the text also lists the city's newest permits, land use applications and code
+ * complaints within 150 m (see sources/nearby.ts), so a new permit next door is reported too.
  *
  * Scheduled results arrive at /api/watch/hook and are kept in Vercel Runtime Cache for the report.
  */
@@ -21,7 +23,9 @@ const LIMIT = Number(process.env.MONITOR_LIMIT ?? 40);
 const NAME_PREFIX = "Lot & Block:";
 const SCHEDULE = "CRON_TZ=America/Los_Angeles 0 7 * * *";
 const PURPOSE =
-  "A new building permit, a new sale or transfer, a change of owner, a new assessed value, or a new hazard flag appears for this parcel.";
+  "A new building permit, a new sale or transfer, a change of owner, a new assessed value, or a new hazard flag appears for this parcel, " +
+  "or a new building permit, land use application or code complaint appears at or near its address. " +
+  "A record that only dropped off the bottom of a list is not a change.";
 
 const cache = getCache({ namespace: "lotnblock" });
 

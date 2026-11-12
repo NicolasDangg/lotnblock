@@ -85,7 +85,9 @@ async function step<T>(job: AgentJob<T>): Promise<AgentState<T>> {
     }
     if (last.status === "COMPLETED" && last.result && job.complete(last.result as T)) {
       const out = { data: last.result as T, retrievedAt: last.finished_at ?? last.created_at };
-      await cache.set(job.key, out, { ttl: job.ttlSeconds });
+      // Count the week from when the portal was read, not from when we noticed the run.
+      const age = Math.floor((Date.now() - Date.parse(out.retrievedAt)) / 1000);
+      await cache.set(job.key, out, { ttl: Math.max(60, job.ttlSeconds - age) });
       return { state: "done", ...out, cached: false };
     }
     if (!going && age < RETRY_AFTER_MS) {

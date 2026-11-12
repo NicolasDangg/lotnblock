@@ -26,7 +26,7 @@ export interface Section<T> {
   via: Via;
   retrievedAt: string; // ISO timestamp
   data: T | null;
-  /** Human-readable reason when status isn't "found". */
+  /** Human-readable reason when status isn't "found", or a caveat on a "found" section (e.g. the source lists more records than were read). */
   note?: string;
 }
 

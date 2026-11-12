@@ -18,6 +18,22 @@ const when = (iso: string) =>
     minute: "2-digit",
   });
 
+const NEARBY_TOO = " In Seattle it also catches a new permit, land use application or code complaint on the same block.";
+
+/** A changed line, with the record's portal address (if it ends in one) turned into a link. */
+function Line({ text }: { text: string }) {
+  const m = text.match(/^(.*?)\s*(https:\/\/\S+)$/);
+  if (!m) return <>{text}</>;
+  return (
+    <>
+      {m[1]}{" "}
+      <a className="link" href={m[2]} target="_blank" rel="noreferrer">
+        Open the record
+      </a>
+    </>
+  );
+}
+
 /**
  * "Watch this address": a TinyFish Monitor re-reads the parcel's county records every morning and
  * reports what changed. Shows the watch's checks so far, newest first.
@@ -59,8 +75,8 @@ export function WatchPanel({ pin, q }: { pin: string; q: string }) {
           </h2>
           <p className="mt-1 text-[var(--muted)]">
             {state?.watching
-              ? `Every morning at 7, TinyFish Monitor re-reads the county's records for this lot and lists here anything that changed: a new permit, a sale, a new owner or value, a new hazard flag.${state.monitor ? ` Watching since ${when(state.monitor.created_at)}.` : ""}`
-              : "Get the county's records for this lot re-read every morning. A new permit, a sale, a new owner or value, or a new hazard flag shows up here."}
+              ? `Every morning at 7, TinyFish Monitor re-reads the county's records for this lot and lists here anything that changed: a new permit, a sale, a new owner or value, a new hazard flag.${NEARBY_TOO}${state.monitor ? ` Watching since ${when(state.monitor.created_at)}.` : ""}`
+              : `Get the county's records for this lot re-read every morning. A new permit, a sale, a new owner or value, or a new hazard flag shows up here.${NEARBY_TOO}`}
           </p>
         </div>
         {state?.watching ? (
@@ -97,7 +113,9 @@ export function WatchPanel({ pin, q }: { pin: string; q: string }) {
               {a.outcome === "changed" && a.added.length ? (
                 <ul className="t-small mt-1 text-[var(--muted)]">
                   {a.added.slice(0, 5).map((l) => (
-                    <li key={l}>New: {l}</li>
+                    <li key={l}>
+                      New: <Line text={l} />
+                    </li>
                   ))}
                 </ul>
               ) : null}

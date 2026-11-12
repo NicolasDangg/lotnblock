@@ -64,6 +64,12 @@ const goal = (pin: string) =>
   `Set search_completed to true only if you reached the account's tax details or the site's own no-results message (copy that message into site_message). ` +
   `If you could not finish for any reason, set search_completed to false.`;
 
+/** The account number as the Treasurer prints it (digits, sometimes dashed). Anything else is a misread and is dropped. */
+export const accountNumber = (s?: string) => {
+  const t = (s ?? "").trim();
+  return /^\d[\d-]{8,14}$/.test(t) ? t : "";
+};
+
 const amount = (s?: string) => {
   if (!s || !/\d/.test(s)) return null;
   const n = Number(s.replace(/[^\d.-]/g, ""));
@@ -93,7 +99,7 @@ export async function treasurer(p: ResolvedProperty): Promise<Section<TaxRecord>
       .filter((y) => y.year)
       .sort((a, b) => b.year - a.year);
     const s = years.length
-      ? section<TaxRecord>(base, "found", { account: res.data.account ?? "", notice: res.data.notice ?? "", years })
+      ? section<TaxRecord>(base, "found", { account: accountNumber(res.data.account), notice: res.data.notice ?? "", years })
       : section<TaxRecord>(base, "none", null, res.data.site_message || "The Treasurer lists no tax bills for this parcel");
     return { ...s, retrievedAt: res.retrievedAt };
   } catch (err) {

@@ -145,6 +145,29 @@ export async function findPortal(jurisdiction: string): Promise<{ url: string; t
   return best;
 }
 
+/** Seattle's own link to one record: the address its open data uses for every permit and case. */
+const seattleRecordUrl = (number: string) =>
+  `https://services.seattle.gov/portal/customize/LinkToRecord.aspx?altId=${encodeURIComponent(number)}`;
+
+/**
+ * How many records the portal says it has, from its own count ("Showing 51-52 of 52",
+ * "5 records found", "1-25 of 250+"). Null when the text gives no count.
+ */
+export function listedTotal(totalShown?: string): { count: number; orMore: boolean } | null {
+  const t = totalShown ?? "";
+  const m = t.match(/\b\d+\s*[-–]\s*\d+\s+of\s+([\d,]+)\s*(\+)?/i) ?? t.match(/\b([\d,]+)\s*(\+)?\s+(?:records?|results?|permits?)\b/i);
+  if (!m) return null;
+  const count = Number(m[1].replace(/,/g, ""));
+  return Number.isFinite(count) ? { count, orMore: Boolean(m[2]) } : null;
+}
+
+/** The caveat for a search that read fewer records than the portal says it has; undefined when all were read. */
+export function shortfallNote(totalShown: string | undefined, read: number): string | undefined {
+  const listed = listedTotal(totalShown);
+  if (!listed || (listed.count <= read && !listed.orMore)) return undefined;
+  return `The portal lists ${listed.count}${listed.orMore ? " or more" : ""} records for this address and ${read} were read, so some are missing here. Check the portal for the rest.`;
+}
+
 /** Complaints, violations and enforcement cases, as opposed to permits and licences. */
 const ENFORCEMENT = /complaint|violation|enforcement|notice of|citation|emergency order|vacant building/i;
 /** Inventory entries, not permits or cases: equipment certificates and the building's data card. */
@@ -178,6 +201,8 @@ async function records(p: ResolvedProperty, portal: Portal) {
     complete: (d) => d.search_completed === true && !contradicts(d),
   });
   if (res.state === "running") return { running: true as const, startedAt: res.startedAt };
+  // The portal's own count against what the Agent read: a shortfall is reported, never hidden.
+  const shortfall = shortfallNote(res.data.total_shown, (res.data.records ?? []).filter((r) => r.record_number).length);
   const rows: PortalRecord[] = (res.data.records ?? [])
     .filter((r) => r.record_number && !NOT_A_CASE.test(r.record_type ?? ""))
     // A row that is the table's own header, or carries nothing but a number, isn't a record.
@@ -188,6 +213,7 @@ async function records(p: ResolvedProperty, portal: Portal) {
       status: clean(r.status),
       date: clean(r.date),
       description: clean(r.description),
+      ...(portal.url === PORTAL_SEARCH_URL ? { url: seattleRecordUrl(clean(r.record_number)) } : {}),
     }))
     // Street-use records put the address where the description goes; that says nothing.
     .map((r) => (r.description.toUpperCase().startsWith(p.address.toUpperCase()) && r.description.length < p.address.length + 12 ? { ...r, description: "" } : r));
@@ -197,7 +223,7 @@ async function records(p: ResolvedProperty, portal: Portal) {
     return y ? new Date(y, m - 1, day).getTime() : 0;
   };
   rows.sort((a, b) => when(b.date) - when(a.date));
-  return { running: false as const, rows, retrievedAt: res.retrievedAt, searched: res.data.values_entered?.trim() };
+  return { running: false as const, rows, retrievedAt: res.retrievedAt, searched: res.data.values_entered?.trim(), shortfall };
 }
 
 const base = (url: string, name = NAME) => ({ sourceUrl: url, sourceName: name, via: "agent" as const });
@@ -241,16 +267,19 @@ function make(kind: "permits" | "violations") {
       if (r.running) {
         return section<PortalRecord[]>(receipt, "pending", null, `Searching since ${r.startedAt}`);
       }
-      const { rows, retrievedAt, searched } = r;
+      const { rows, retrievedAt, searched, shortfall } = r;
       const mine = rows.filter((r) => (kind === "violations") === ENFORCEMENT.test(`${r.type} ${r.number}`));
       const s = mine.length
-        ? section<PortalRecord[]>(receipt, "found", mine)
-        : section<PortalRecord[]>(
-            receipt,
-            "none",
-            null,
-            `The portal lists no ${what} at this address${searched ? ` (searched for: ${searched})` : ""}.`,
-          );
+        ? section<PortalRecord[]>(receipt, "found", mine, shortfall)
+        : shortfall
+          ? // Records went unread, so "none" can't be claimed for this kind.
+            section<PortalRecord[]>(receipt, "source_error", null, `the search was incomplete, so ${what} can't be ruled out. ${shortfall}`)
+          : section<PortalRecord[]>(
+              receipt,
+              "none",
+              null,
+              `The portal lists no ${what} at this address${searched ? ` (searched for: ${searched})` : ""}.`,
+            );
       return { ...s, retrievedAt };
     } catch (err) {
       const note = err instanceof AgentUnavailable ? err.message : "the portal search didn't finish";

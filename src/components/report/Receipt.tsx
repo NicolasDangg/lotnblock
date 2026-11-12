@@ -6,7 +6,7 @@ import { time } from "./format";
 export function Receipt({ section }: { section: Section<unknown> }) {
   return (
     <p className="t-small muted mt-6">
-      From {section.sourceName}, read at {time(section.retrievedAt)} with {VIA_LABEL[section.via]}.{" "}
+      From {section.sourceName}, read on {time(section.retrievedAt)} with {VIA_LABEL[section.via]}.{" "}
       <a className="link text-[var(--ink)]" href={section.sourceUrl} target="_blank" rel="noreferrer">
         Open the source page
       </a>

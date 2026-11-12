@@ -23,7 +23,10 @@ export function CitySection({
       {!section || section.status === "pending" ? (
         <p className="reading">Searching the city&apos;s permit portal with TinyFish Agent. This takes a few minutes; the rest of the report is ready now.</p>
       ) : section.status === "found" && section.data ? (
-        <Records rows={section.data} />
+        <>
+          {section.note ? <p className="reading mb-6 bg-[var(--field-blush)] px-6 py-4">{section.note}</p> : null}
+          <Records rows={section.data} />
+        </>
       ) : (
         <Gap section={section} what={what} />
       )}
@@ -73,7 +76,15 @@ function Item({ r }: { r: PortalRecord }) {
         {r.date} · {r.type || "Record"} · {r.status || "status not shown"}
       </p>
       <p className="line-clamp-3">{r.description || "No description given."}</p>
-      <p className="t-small text-[var(--muted)]">{r.number}</p>
+      <p className="t-small text-[var(--muted)]">
+        {r.url ? (
+          <a className="link" href={r.url} target="_blank" rel="noreferrer">
+            {r.number} on the city portal
+          </a>
+        ) : (
+          r.number
+        )}
+      </p>
     </li>
   );
 }
