@@ -158,6 +158,9 @@ export default async function Home() {
                 <span style={{ ["--l" as string]: 1 }}>King County home</span>
               </span>
             </h1>
+            <p role="note" style={{ display: "inline-block", margin: "18px 0 0", padding: "8px 14px", border: "2px solid currentColor", borderRadius: 8, fontWeight: 700, fontSize: "1.05rem", lineHeight: 1.35 }}>
+              my tinyfish wallet has run out so no tinyfish agent or monitor run etc
+            </p>
             <p className="t-lead mt-6 max-w-[46ch]" data-reveal style={{ ["--i" as string]: 4 }}>
               Value, sales, taxes, permits, flood zone and schools, read live from official government websites
               <span className="max-md:hidden"> and linked to the page each came from</span>.
